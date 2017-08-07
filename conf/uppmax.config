@@ -1,0 +1,116 @@
+/*
+Uppmax config file for NGI-EXOseq pipeline
+Contains paths for meta files, genomes and
+configurations for executors i.e. SLURM
+*/
+
+process {
+    executor = 'slurm'
+    cpus = {2 * task.attempt}
+    memory = { 16.GB * task.attempt }
+    time = { 2.h * task.attempt }
+    clusterOptions = { "-A $params.project ${params.clusterOptions ?: ''}" }
+    errorStrategy = { task.exitStatus == 143 ? 'retry' : 'finish' }
+    maxRetries = 3
+    maxErrors = '-1'
+    $bwaAlign {
+        module = ['bioinfo-tools', 'bwa/0.7.15']
+        cpus = { 8 * task.attempt }
+        memory = { 64.GB * task.attempt }
+        time = { 10.h * task.attempt }
+    }
+    $fastqToSam {
+        module = ['bioinfo-tools', 'picard/2.0.1']
+        cpus = { 4 * task.attempt }
+    }
+    $mergeLaneBam {
+        module = ['bioinfo-tools', 'picard/2.0.1']
+        cpus = { 8 * task.attempt }
+        memory = { 40.GB * task.attempt }
+        time = { 10.h * task.attempt }
+    }
+    $sortLanesBam {
+        module = ['bioinfo-tools', 'picard/2.0.1']
+    }
+    $mergeSampleBam {
+        module = ['bioinfo-tools', 'picard/2.0.1']
+        cpus = { 8 * task.attempt }
+        memory = { 40.GB * task.attempt }
+        time = { 10.h * task.attempt }
+    }
+    $markDuplicate {
+        module = ['bioinfo-tools', 'picard/2.0.1']
+        cpus = { 8 * task.attempt }
+        memory = { 32.GB * task.attempt }
+        time = { 5.h * task.attempt }
+    }
+    $recalibrate {
+        module = ['bioinfo-tools', 'GATK/3.7']
+        cpus = { 8 * task.attempt }
+        memory = { 32.GB * task.attempt }
+        time = { 5.h * task.attempt }
+    }
+    $realign {
+        module = ['bioinfo-tools', 'GATK/3.7']
+        cpus = { 8 * task.attempt }
+        memory = { 32.GB * task.attempt }
+        time = { 5.h * task.attempt }
+    }
+    $calculateMetrics {
+        module = ['bioinfo-tools', 'picard/2.0.1']
+    }
+    $variantCall {
+        module = ['bioinfo-tools', 'GATK/3.7']
+        cpus = { 8 * task.attempt }
+        memory = { 32.GB * task.attempt }
+        time = { 8.h * task.attempt }
+    }
+    $variantSelect {
+        module = ['bioinfo-tools', 'GATK/3.7']
+        cpus = { 4 * task.attempt }
+        time = { 3.h * task.attempt }
+    }
+    $filterSnp {
+        module = ['bioinfo-tools', 'GATK/3.7']
+    }
+    $filterIndel {
+        module = ['bioinfo-tools', 'GATK/3.7']
+    }
+    $combineVariants {
+        module = ['bioinfo-tools', 'GATK/3.7']
+        cpus = { 4 * task.attempt }
+    }
+    $haplotypePhasing {
+        module = ['bioinfo-tools', 'GATK/3.7']
+        cpus = { 4 * task.attempt }
+        time = { 3.h * task.attempt }
+    }
+    $variantEvaluate {
+        module = ['bioinfo-tools', 'GATK/3.7']
+        cpus = { 4 * task.attempt }
+    }
+    $variantAnnotate {
+        module = ['bioinfo-tools', 'GATK/3.7', 'snpEff/4.2']
+        cpus = { 4 * task.attempt }
+        time = { 3.h * task.attempt }
+    }
+}
+
+params {
+    metaFiles {
+        'GRCh37' {
+            gfasta = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/genome_seq_hg19/hg19.fa'
+            bwa_index = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/bwa_genome_hg19/hg19.ga'
+            dbsnp = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/training_sets/dbsnp_132.vcf'
+            hapmap = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/training_sets/hapmap_3.3.vcf'
+            omni = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/training_sets/1000G_omni2.5.vcf'
+        }
+    }
+    kitFiles {
+        'agilent_v5' {
+            bait = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/agilent_files/SureSelect_Human_All_Exon_V5_baits.interval_list'
+            target = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/agilent_files/SureSelect_Human_All_Exon_V5_targets.interval_list'
+            target_bed = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/agilent_files/SureSelect_Human_All_Exon_V5_targets_snpeff.bed'
+        }
+    }
+}

@@ -1,1 +1,1 @@
-# NGI-ExoSeq
+# NGI-EXOseq
