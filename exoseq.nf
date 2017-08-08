@@ -73,6 +73,20 @@ if (params.help){
     exit 0
 }
 
+//Nextflow version check
+nf_required_version = '0.24.0'
+try {
+    if( ! workflow.nextflow.version.matches(">= $nf_required_version") ){
+        throw GroovyException('Nextflow version too old')
+        }
+} catch (all) {
+    log.error "====================================================\n" +
+              "  Nextflow version $nf_required_version required! You are running v$workflow.nextflow.version.\n" +
+              "  Pipeline execution will continue, but things may break.\n" +
+              "  Please run `nextflow self-update` to update Nextflow.\n" +
+              "============================================================"
+}
+
 //Check blocks for ceratin required parameters, to see they are given and exists
 if (!params.reads || !params.genome){
     exit 1, "Parameters '--project' and '--genome' are required to run the pipeline"
@@ -212,7 +226,8 @@ process mergeSampleBam {
 process markDuplicate {
     tag "$sample"
     publishDir "${params.outdir}/${sample}/metrics", mode: 'copy',
-        saveAs: { filename -> filename.indexOf(".dup_metrics") > 0 ? filename : null } 
+        saveAs: { filename -> filename.indexOf(".dup_metrics") > 0 ? filename : null }
+
     input:
         set val(sample), file(sorted_bam) from samples_sorted_bam
     
