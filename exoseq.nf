@@ -115,7 +115,7 @@ if (!params.metaFiles[ params.genome ] && ['gfasta', 'bwa_index', 'dbsnp', 'hapm
 // Collect fastq files on sample_lane basis from given project directory
 Channel
     .fromFilePairs(params.reads)
-    .ifEmpty { exit 1, "Could not find any fastq files in project directory '$params.project'" }
+    .ifEmpty { exit 1, "Could not find any FastQ files matching '$params.reads'\nNB: Path needs to be enclosed in quotes!" }
     .into { fastq_for_aln; fastq_for_sam }
 
 // Align the reads individually for each lane using BWA
@@ -302,7 +302,7 @@ process markDuplicate {
 
     ouptut:
     set val(sample), file("${sample}_markdup.bam") into samples_markdup_bam
-        file "${sample}.dup_metrics" into dup_metric_files
+    file "${sample}.dup_metrics" into dup_metric_files
 
     script:
     """
