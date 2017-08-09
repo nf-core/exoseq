@@ -120,12 +120,12 @@ Channel
 
 // Align the reads individually for each lane using BWA
 process bwaAlign {
-    tag sample
+    tag "$sample"
 
     input:
     set val(sample), file(fastq) from fastq_for_aln
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_bwa.sam") into raw_aln_sam
 
     script:
@@ -141,12 +141,12 @@ process bwaAlign {
 
 // Create unmapped bam files from raw fastq
 process fastqToSam {
-    tag sample
+    tag "$sample"
 
     input:
     set val(sample), file(fastq) from fastq_for_sam
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_unaligned.bam") into raw_unaln_bam
 
     script:
@@ -181,16 +181,16 @@ process fastqToSam {
 raw_aln_sam
     .cross(raw_unaln_bam)
     .map{ it -> [it[0][0], it[0][1], it[1][1]] }
-    .into{ all_sample_bam }
+    .set{ all_sample_bam }
 
 // Create mergerd bam for each sample on flowcell_lane basis
 process mergeLaneBam {
-    tag sample
+    tag "$sample"
 
     input:
     set val(sample), file(aln_sam), file(unaln_bam) from all_sample_bam
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_merged.bam") into lanes_merged_bam
 
     script:
@@ -223,12 +223,12 @@ process mergeLaneBam {
 
 // Sort the bam merged bam files for lane
 process sortLanesBam {
-    tag sample
+    tag "$sample"
 
     input:
     set val(sample), file(lane_bam) from lanes_merged_bam
 
-    ouptut:
+    output:
     set val({sample - ~/(_[A-Z0-9]*)?(_L\d*)?$/}), file("${sample}_sorted.bam") into lanes_sorted_bam
 
     script:
@@ -252,18 +252,18 @@ process sortLanesBam {
 // Group the bam file for each sample
 lanes_sorted_bam
     .groupTuple()
-    .into{ lanes_sorted_bam_group }
+    .set{ lanes_sorted_bam_group }
 
 // Merge all bam files from lanes to one bam per sample
 process mergeSampleBam {
-    tag sample
+    tag "$sample"
     publishDir "${params.outdir}/${sample}/alignment", mode: 'copy',
         saveAs: {filename -> filename.replaceFirst(/sorted/, "raw_sorted")}
 
     input:
     set val(sample), file(sample_bam) from lanes_sorted_bam_group
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_sorted.bam") into samples_sorted_bam
 
     script:
@@ -293,14 +293,14 @@ process mergeSampleBam {
 
 // Mark duplicates for all merged samples bam files
 process markDuplicate {
-    tag sample
+    tag "$sample"
     publishDir "${params.outdir}/${sample}/metrics", mode: 'copy',
         saveAs: { filename -> filename.indexOf(".dup_metrics") > 0 ? filename : null }
 
     input:
     set val(sample), file(sorted_bam) from samples_sorted_bam
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_markdup.bam") into samples_markdup_bam
     file "${sample}.dup_metrics" into dup_metric_files
 
@@ -331,12 +331,12 @@ process markDuplicate {
 
 // Recalibrate the bam file with known variants
 process recalibrate {
-    tag sample
+    tag "$sample"
 
     input:
     set val(sample), file(markdup_bam) from samples_markdup_bam
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_recal.bam"), file("${sample}_recal.bai") into samples_recal_bam
 
     script:
@@ -369,14 +369,14 @@ process recalibrate {
 
 // Realign the bam files based on known variants
 process realign {
-    tag sample
+    tag "$sample"
     publishDir "${params.outdir}/${sample}/alignment", mode: 'copy',
         saveAs: {filename -> filename.replaceFirst(/realign/, "sorted_dupmarked_recalibrated_realigned")}
 
     input:
     set val(sample), file(recal_bam), file(recal_bam_ind) from samples_recal_bam
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_realign.bam"), file("${sample}_realign.bai") into bam_vcall, bam_phasing, bam_metrics
 
     script:
@@ -399,13 +399,13 @@ process realign {
 
 // Calculate certain metrics
 process calculateMetrics {
-    tag sample
+    tag "$sample"
     publishDir "${params.outdir}/${sample}/metrics", mode: 'copy'
 
     input:
     set val(sample), file(aligned_bam), file(aligned_bam_ind) from bam_metrics
 
-    ouptut:
+    output:
     file("*{metrics,pdf}") into metric_files
 
     script:
@@ -465,14 +465,14 @@ process calculateMetrics {
 
 // Call variants
 process variantCall {
-    tag sample
+    tag "$sample"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy',
         saveAs: {filename -> filename.replaceFirst(/variants/, "raw_variants")}
 
     input:
     set val(sample), file(realign_bam), file(realign_bam_ind) from bam_vcall
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_variants.vcf"), file("${sample}_variants.vcf.idx") into raw_variants
 
     script:
@@ -495,14 +495,14 @@ process variantCall {
 
 // Select variants
 process variantSelect {
-    tag sample
+    tag "$sample"
 
     input:
     set val(sample), file(raw_vcf), file(raw_vcf_idx) from raw_variants
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_snp.vcf"), file("${sample}_snp.vcf.idx") into raw_snp
-        set val(sample), file("${sample}_indels.vcf"), file("${sample}_indels.vcf.idx") into raw_indels
+    set val(sample), file("${sample}_indels.vcf"), file("${sample}_indels.vcf.idx") into raw_indels
 
     script:
     """
@@ -526,13 +526,13 @@ process variantSelect {
 
 // Filter SNP
 process filterSnp {
-    tag sample
+    tag "$sample"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
 
     input:
     set val(sample), file(raw_snp), file(raw_snp_idx) from raw_snp
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_filtered_snp.vcf"), file("${sample}_filtered_snp.vcf.idx") into filtered_snp
 
     script:
@@ -563,13 +563,13 @@ process filterSnp {
 
 // Filter indels
 process filterIndel {
-    tag sample
+    tag "$sample"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
 
     input:
     set val(sample), file(raw_indel), file(raw_indel_idx) from raw_indels
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_filtered_indels.vcf"), file("${sample}_filtered_indels.vcf.idx") into filtered_indels
 
     script:
@@ -591,16 +591,16 @@ process filterIndel {
 filtered_snp
     .cross(filtered_indels)
     .map{ it -> [it[0][0], it[0][1], it[0][2], it[1][1], it[1][2]] }
-    .into{ variants_filtered }
+    .set{ variants_filtered }
 
 // Combine filtered snp and indels for each sample
 process combineVariants {
-    tag sample
+    tag "$sample"
 
     input:
     set val(sample), file(fsnp), file(fsnp_idx), file(findel), file(findel_idx) from variants_filtered
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_combined_variants.vcf"), file("${sample}_combined_variants.vcf.idx") into combined_variants
 
     script:
@@ -619,17 +619,17 @@ process combineVariants {
 bam_phasing
     .cross(combined_variants)
     .map{ it -> [it[0][0], it[0][1], it[0][2], it[1][1], it[1][2]] }
-    .into{ files_for_phasing }
+    .set{ files_for_phasing }
 
 // Indetifying haplotypes and create phasing between them
 process haplotypePhasing {
-    tag sample
+    tag "$sample"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
 
     input:
     set val(sample), file(bam), file(bam_ind), file(vcf), file(vcf_ind) from files_for_phasing
 
-    ouptut:
+    output:
     set val(sample), file("${sample}_combined_phased_variants.vcf"), file("${sample}_combined_phased_variants.vcf.idx") into vcf_eval, vcf_anno
 
     script:
@@ -644,13 +644,13 @@ process haplotypePhasing {
 
 // Evaluate variants
 process variantEvaluate {
-    tag sample
+    tag "$sample"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
 
     input:
     set val(sample), file(phased_vcf), file(phased_vcf_ind) from vcf_eval
 
-    ouptut:
+    output:
     file "${sample}_combined_phased_variants.eval"
 
     script:
@@ -673,13 +673,13 @@ process variantEvaluate {
 
 // Annotate variants
 process variantAnnotate {
-    tag sample
+    tag "$sample"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
 
     input:
     set val(sample), file(phased_vcf), file(phased_vcf_ind) from vcf_anno
 
-    ouptut:
+    output:
     file "*.{vcf,idx,snpeff}"
 
     script:
