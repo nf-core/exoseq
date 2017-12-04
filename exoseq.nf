@@ -4,14 +4,15 @@ vim: syntax=groovy
 -*- mode: groovy;-*-
 
 ========================================================================================
-               N G I - E X O S E Q    B E S T    P R A C T I C E
+               QBIC - E X O S E Q    B E S T    P R A C T I C E
 ========================================================================================
- New Exome Sequencing Best Practice Analysis Pipeline. Started August 2017.
+ This is based on previous work at NGI, see webpage for details
  #### Homepage / Documentation
- https://github.com/SciLifeLab/NGI-ExoSeq
+ https://github.com/apeltzer/QBIC-ExoSeq
  #### Authors
  Senthilkumar Panneerselvam @senthil10 <senthilkumar.panneerselvam@scilifelab.se>
  Phil Ewels @ewels <phil.ewels@scilifelab.se>
+ Alex Peltzer @alex_peltzer <alexander.peltzer@qbic.uni-tuebingen.de>
 ----------------------------------------------------------------------------------------
 Developed based on GATK's best practise, takes set of FASTQ files and performs:
  - alignment (BWA)
@@ -27,7 +28,7 @@ version = '1.0'
 // Help message
 helpMessage = """
 ===============================================================================
-NGI-ExoSeq : Exome/Targeted sequence capture best practice analysis v${version}
+QBIC-ExoSeq : Exome/Targeted sequence capture best practice analysis v${version}
 ===============================================================================
 
 Usage: nextflow SciLifeLab/NGI-ExoSeq --reads 'P1234*_R{1,2}.fastq.gz' --genome GRCh37
