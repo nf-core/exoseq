@@ -1,4 +1,4 @@
-# ![QBiC](https://github.com/apeltzer/QBIC-ExoSeq/tree/master/docs/images/qbic_logo.png) QBiC-ExoSeq
+# ![QBiC](https://raw.githubusercontent.com/apeltzer/QBIC-ExoSeq/master/docs/images/qbic_logo.png) QBiC-ExoSeq
 
 ### Introduction
 
@@ -42,5 +42,5 @@ In addition, we would like to recognise:
 
 ---
 
-[![QBiC](https://github.com/apeltzer/QBIC-ExoSeq/tree/master/docs/images/qbic_logo.png)](http://www.uni-tuebingen.de/en/facilities/zentrale-einrichtungen/quantitative-biology-center-qbic.html)
+[![QBiC](https://raw.githubusercontent.com/apeltzer/QBIC-ExoSeq/master/docs/images/qbic_logo.png)](http://www.uni-tuebingen.de/en/facilities/zentrale-einrichtungen/quantitative-biology-center-qbic.html)
 ---
