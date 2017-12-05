@@ -236,7 +236,6 @@ process sortSam {
         -@ ${task.cpus} $avail_mem \\
         -o ${raw_aln_sam.baseName}.sorted.bam"
     """
-
 }
 
 /*
@@ -253,7 +252,7 @@ process markDuplicates {
 
     output:
     set val(sample), file("${sample}_markdup.bam") into samples_markdup_bam
-    file "${sample}.dup_metrics" into dup_metric_files
+    file "${sample}.dup_metrics" into markdup_results
 
     script:
     """
@@ -281,7 +280,7 @@ process markDuplicates {
 }
 
 // Recalibrate the bam file with known variants
-process recalibrate {
+process recal_bam_files {
     tag "$sample"
 
     input:
