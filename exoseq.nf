@@ -67,7 +67,6 @@ documentation at https:// github.com/apeltzer/QBIC-ExoSeq
 params.help = false
 params.reads = false
 params.singleEnd = false
-
 params.genome = false
 
 //Clipping options
@@ -95,6 +94,7 @@ params.outdir = './results'
 //Configuration parameters
 params.clusterOptions = false
 params.project = false
+params.cpus = 4
 
 
 // Show help when needed
@@ -165,7 +165,7 @@ if(params.notrim){
         tpc_r1 = params.three_prime_clip_r1 > 0 ? "--three_prime_clip_r1 ${params.three_prime_clip_r1}" : ''
         tpc_r2 = params.three_prime_clip_r2 > 0 ? "--three_prime_clip_r2 ${params.three_prime_clip_r2}" : ''
         rrbs = params.rrbs ? "--rrbs" : ''
-        if (single) {
+        if (params.singleEnd) {
             """
             trim_galore --gzip $rrbs $c_r1 $tpc_r1 $reads
             """
@@ -186,25 +186,44 @@ process bwamem {
     tag "$sample"
 
     input:
-    set val(sample), file(fastq) from trimmed_reads
+    set val(sample), file(reads) from trimmed_reads
 
     output:
     set val(sample), file("${sample}_bwa.sam") into raw_aln_sam
 
     script:
-    """
-    bwa mem \\
-        -t 8 \\
+    if(params.singleEnd){
+        """
+         bwa mem \\
+        -t ${task.cpus} \\
         -k 2 \\
         $params.bwa_index \\
-        $fastq \\
+        $reads \\
             > ${sample}_bwa.sam
     """
+    } else {
+    """
+        bwa mem \\
+        -t ${task.cpus} \\
+        -k 2 \\
+        $params.bwa_index \\
+        $reads[0] $reads[1]\\
+            > ${sample}_bwa.sam
+    """
+    }
+    
 }
 
+/*
+*  STEP 3 - Convert to BAM, sort BAM  
+*/ 
 
-// Mark duplicates for all merged samples bam files
-process markDuplicate {
+process sortSam {
+    tag "$sample"
+    
+}
+
+process markDuplicates {
     tag "$sample"
     publishDir "${params.outdir}/${sample}/metrics", mode: 'copy',
         saveAs: { filename -> filename.indexOf(".dup_metrics") > 0 ? filename : null }
