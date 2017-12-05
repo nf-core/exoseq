@@ -59,17 +59,25 @@ Genome/Variation files:
 Other options:
 --project                      Uppnex project to user for SLURM executor
 
-For more detailed information regarding the paramaters and usage refer to package
-documentation at https:// github.com/SciLifeLab/NGI-ExoSeq
+For more detailed information regarding the parameters and usage refer to package
+documentation at https:// github.com/apeltzer/QBIC-ExoSeq
 """
 
 // Variables and defaults
 params.help = false
 params.reads = false
+params.singleEnd = false
+
 params.genome = false
-params.clusterOptions = false
-params.project = false
-params.outdir = './results'
+
+//Clipping options
+params.notrim = false
+params.clip_r1 = 0
+params.clip_r2 = 0
+params.three_prime_clip_r1 = 0
+params.three_prime_clip_r2 = 
+
+// Kit options
 params.kit = 'agilent_v5'
 params.bait = params.kitFiles[ params.kit ] ? params.kitFiles[ params.kit ].bait ?: false : false
 params.target = params.kitFiles[ params.kit ] ? params.kitFiles[ params.kit ].target ?: false : false
@@ -79,6 +87,15 @@ params.hapmap = params.metaFiles[ params.genome ] ? params.metaFiles[ params.gen
 params.omni = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].omni ?: false : false
 params.gfasta = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].gfasta ?: false : false
 params.bwa_index = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].bwa_index ?: false : false
+
+
+//Output configuration
+params.outdir = './results'
+
+//Configuration parameters
+params.clusterOptions = false
+params.project = false
+
 
 // Show help when needed
 if (params.help){
@@ -113,18 +130,65 @@ if (!params.metaFiles[ params.genome ] && ['gfasta', 'bwa_index', 'dbsnp', 'hapm
             "files with options '--gfasta', '--bwa_index', '--dbsnp', '--hapmap', '--omni' and '--target'"
 }
 
-// Collect fastq files on sample_lane basis from given project directory
+/*
+ * Create a channel for input read files
+ */
+params.singleEnd = false
 Channel
-    .fromFilePairs(params.reads)
-    .ifEmpty { exit 1, "Could not find any FastQ files matching '$params.reads'\nNB: Path needs to be enclosed in quotes!" }
-    .into { fastq_for_aln; fastq_for_sam }
+    .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
+    .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
+.into { read_files_fastqc; read_files_trimming }
+
+/*
+ * STEP 1 - trim with trim galore
+ */
+
+if(params.notrim){
+    trimmed_reads = read_files_trimming
+    trimgalore_results = []
+} else {
+    process trim_galore {
+        tag "$name"
+        publishDir "${params.outdir}/trim_galore", mode: 'copy'
+
+        input:
+        set val(name), file(reads) from fastq_for_aln
+
+        output:
+        set val(name), file('*fq.gz') into trimmed_reads
+        file '*trimming_report.txt' into trimgalore_results
+
+        script:
+        single = reads instanceof Path
+        c_r1 = params.clip_r1 > 0 ? "--clip_r1 ${params.clip_r1}" : ''
+        c_r2 = params.clip_r2 > 0 ? "--clip_r2 ${params.clip_r2}" : ''
+        tpc_r1 = params.three_prime_clip_r1 > 0 ? "--three_prime_clip_r1 ${params.three_prime_clip_r1}" : ''
+        tpc_r2 = params.three_prime_clip_r2 > 0 ? "--three_prime_clip_r2 ${params.three_prime_clip_r2}" : ''
+        rrbs = params.rrbs ? "--rrbs" : ''
+        if (single) {
+            """
+            trim_galore --gzip $rrbs $c_r1 $tpc_r1 $reads
+            """
+        } else {
+            """
+            trim_galore --paired --gzip $rrbs $c_r1 $c_r2 $tpc_r1 $tpc_r2 $reads
+            """
+        }
+    }
+}
+
+
+/*
+ * STEP 2 - Map with BWA
+ */
+
 
 // Align the reads individually for each lane using BWA
-process bwaAlign {
+process bwamem {
     tag "$sample"
 
     input:
-    set val(sample), file(fastq) from fastq_for_aln
+    set val(sample), file(fastq) from trimmed_reads
 
     output:
     set val(sample), file("${sample}_bwa.sam") into raw_aln_sam
@@ -178,13 +242,13 @@ process fastqToSam {
     """
 }
 
-// Collect alinged and unaligned files as tuple for each sample
+// Collect aligned and unaligned files as tuple for each sample
 raw_aln_sam
     .cross(raw_unaln_bam)
     .map{ it -> [it[0][0], it[0][1], it[1][1]] }
     .set{ all_sample_bam }
 
-// Create mergerd bam for each sample on flowcell_lane basis
+// Create merged bam for each sample on flowcell_lane basis
 process mergeLaneBam {
     tag "$sample"
 
