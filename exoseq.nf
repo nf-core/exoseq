@@ -211,7 +211,6 @@ process bwamem {
             > ${sample}_bwa.sam
     """
     }
-    
 }
 
 /*
@@ -219,9 +218,30 @@ process bwamem {
 */ 
 
 process sortSam {
-    tag "$sample"
+    tag "${raw_aln_sam.baseName}"
+    publishDir "${params.outdir}/BWAmem", mode: 'copy',
+        saveAs: {filename -> params.saveAlignedIntermediates ? "aligned_sorted"/$filename : null }
     
+    input:
+    file raw_aln_sam
+
+    output: 
+    file "${raw_aln_sam.baseName}.sorted.bam" into samples_sorted_bam
+
+    script:
+    def avail_mem = task.memory == null ? '' : "-m ${task.memory.toBytes() / task.cpus}"
+    """
+    samtools sort \\
+        $raw_aln_sam \\
+        -@ ${task.cpus} $avail_mem \\
+        -o ${raw_aln_sam.baseName}.sorted.bam"
+    """
+
 }
+
+/*
+*  STEP 4 - Mark PCR duplicates in sorted BAM file
+*/ 
 
 process markDuplicates {
     tag "$sample"
