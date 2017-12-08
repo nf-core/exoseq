@@ -31,7 +31,7 @@ helpMessage = """
 QBIC-ExoSeq : Exome/Targeted sequence capture best practice analysis v${version}
 ===============================================================================
 
-Usage: nextflow SciLifeLab/NGI-ExoSeq --reads 'P1234*_R{1,2}.fastq.gz' --genome GRCh37
+Usage: nextflow apeltzer/QBIC-ExoSeq --reads 'P1234*_R{1,2}.fastq.gz' --genome GRCh37
 
 This is a typical usage where the required parameters (with no defaults) were
 given. The all avialable paramaters are listed below based on category
@@ -51,8 +51,10 @@ Kit files:
 
 Genome/Variation files:
 --dbsnp                        Absolute path to dbsnp file
---hapmap                       Absolute path to hapmap file
---omni                         Absolute path to omni file
+--thousandg                    Absolute path to 1000G file
+--clinvar                      Absolute path to ClinVar file
+--exac                         Absolute path to ExAC file
+--gnomad                       Absolute path to GnomAD
 --gfasta                       Absolute path to genome fasta file
 --bwa_index                    Absolute path to bwa genome index
 
@@ -165,14 +167,13 @@ if(params.notrim){
         c_r2 = params.clip_r2 > 0 ? "--clip_r2 ${params.clip_r2}" : ''
         tpc_r1 = params.three_prime_clip_r1 > 0 ? "--three_prime_clip_r1 ${params.three_prime_clip_r1}" : ''
         tpc_r2 = params.three_prime_clip_r2 > 0 ? "--three_prime_clip_r2 ${params.three_prime_clip_r2}" : ''
-        rrbs = params.rrbs ? "--rrbs" : ''
         if (params.singleEnd) {
             """
-            trim_galore --gzip $rrbs $c_r1 $tpc_r1 $reads
+            trim_galore --gzip $c_r1 $tpc_r1 $reads
             """
         } else {
             """
-            trim_galore --paired --gzip $rrbs $c_r1 $c_r2 $tpc_r1 $tpc_r2 $reads
+            trim_galore --paired --gzip $c_r1 $c_r2 $tpc_r1 $tpc_r2 $reads
             """
         }
     }
@@ -208,7 +209,7 @@ process bwamem {
         -t ${task.cpus} \\
         -k 2 \\
         $params.bwa_index \\
-        $reads[0] $reads[1]\\
+        $reads\\
             > ${sample}_bwa.sam
     """
     }
