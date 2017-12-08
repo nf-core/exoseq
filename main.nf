@@ -74,7 +74,7 @@ params.notrim = false
 params.clip_r1 = 0
 params.clip_r2 = 0
 params.three_prime_clip_r1 = 0
-params.three_prime_clip_r2 = 
+params.three_prime_clip_r2 = 0
 
 // Kit options
 params.kit = 'agilent_v5'
@@ -82,8 +82,10 @@ params.bait = params.kitFiles[ params.kit ] ? params.kitFiles[ params.kit ].bait
 params.target = params.kitFiles[ params.kit ] ? params.kitFiles[ params.kit ].target ?: false : false
 params.target_bed = params.kitFiles[ params.kit ] ? params.kitFiles[ params.kit ].target_bed ?: false : false
 params.dbsnp = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].dbsnp ?: false : false
-params.hapmap = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].hapmap ?: false : false
-params.omni = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].omni ?: false : false
+params.thousandg = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].thousandg ?: false : false
+params.clinvar = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].clinvar ?: false : false
+params.exac = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].exac ?: false : false
+params.gnomad = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].gnomad ?: false : false
 params.gfasta = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].gfasta ?: false : false
 params.bwa_index = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].bwa_index ?: false : false
 
@@ -94,7 +96,7 @@ params.outdir = './results'
 //Configuration parameters
 params.clusterOptions = false
 params.project = false
-params.cpus = 4
+params.cpus = 2
 
 
 // Show help when needed
@@ -119,21 +121,20 @@ try {
 
 // Check blocks for ceratin required parameters, to see they are given and exists
 if (!params.reads || !params.genome){
-    exit 1, "Parameters '--project' and '--genome' are required to run the pipeline"
+    exit 1, "Parameters '--reads' and '--genome' are required to run the pipeline"
 }
 if (!params.kitFiles[ params.kit ] && ['bait', 'target'].count{ params[it] } != 2){
     exit 1, "Kit '${params.kit}' is not available in pre-defined config, so " +
             "provide all kit specific files with option '--bait' and '--target'"
 }
-if (!params.metaFiles[ params.genome ] && ['gfasta', 'bwa_index', 'dbsnp', 'hapmap', 'omni'].count{ params[it] } != 5){
+if (!params.metaFiles[ params.genome ] && ['gfasta', 'bwa_index', 'dbsnp', 'thousandg', 'clinvar', 'exac', 'gnomad'].count{ params[it] } != 7){
     exit 1, "Genome '${params.genome}' is not available in pre-defined config, so you need to provide all genome specific " +
-            "files with options '--gfasta', '--bwa_index', '--dbsnp', '--hapmap', '--omni' and '--target'"
+            "files with options '--gfasta', '--bwa_index', '--dbsnp', '--thousandg', '--clinvar', '--exac' and '--gnomad'"
 }
 
 /*
  * Create a channel for input read files
  */
-params.singleEnd = false
 Channel
     .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
     .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
@@ -152,7 +153,7 @@ if(params.notrim){
         publishDir "${params.outdir}/trim_galore", mode: 'copy'
 
         input:
-        set val(name), file(reads) from fastq_for_aln
+        set val(name), file(reads) from read_files_trimming
 
         output:
         set val(name), file('*fq.gz') into trimmed_reads
