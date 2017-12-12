@@ -196,10 +196,11 @@ process bwamem {
     set val(name), file("${name}_bwa.sam") into raw_aln_sam
 
     script:
+    rg="\'@RG\\tID:${params.run_id}\\tSM:${params.run_id}\\tPL:illumina\'"
     if(params.singleEnd){
         """
          bwa mem \\
-        -R '@RG\tID:${params.run_id}\tSM:${params.run_id}' \\ 
+        -R $rg \\
         -t ${task.cpus} \\
         -k 2 \\
         $params.bwa_index \\
@@ -209,14 +210,14 @@ process bwamem {
     } else {
     """
         bwa mem \\
-        -R '@RG\tID:${params.run_id}\tSM:${params.run_id}' \\ 
+        -R $rg \\
         -t ${task.cpus} \\
         -k 2 \\
         $params.bwa_index \\
         $reads\\
             > ${name}_bwa.sam
     """
-    }
+}
 }
 
 /*
