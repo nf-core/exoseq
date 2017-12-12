@@ -260,7 +260,7 @@ process markDuplicates {
 
     script:
     """
-    java -jar \$PICARD_HOME/picard.jar MarkDuplicates \\
+        picard MarkDuplicates \\
         INPUT=$sorted_bam \\
         OUTPUT=${name}_markdup.bam \\
         METRICS_FILE=${name}.dup_metrics \\
