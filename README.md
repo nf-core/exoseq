@@ -1,4 +1,4 @@
-# ![QBiC](https://raw.githubusercontent.com/apeltzer/QBIC-ExoSeq/master/docs/images/qbic_logo.png) QBiC-ExoSeq
+# ![QBiC](https://raw.githubusercontent.com/qbicsoftware/QBIC-ExoSeq/master/docs/images/qbic_logo.png) QBiC-ExoSeq
 
 ### Introduction
 
@@ -27,8 +27,7 @@ The QBiC-ExoSeq pipeline comes with documentation about the pipeline, found in t
 5. [Instuctions on how to install capture kits](docs/kits.md)
 
 ### Credits
-The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) and has been adapted 
-to our needs at QBiC, Tübingen, Germany.
+The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) and has been adapted to our needs at QBiC, Tübingen, Germany.
 
 In addition, we would like to recognise:
 * Developers at [SciLifeLab](http://www.scilifelab.se/) in Stockholm, Sweden 

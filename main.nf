@@ -220,15 +220,15 @@ process bwamem {
 */ 
 
 process sortSam {
-    tag "${raw_aln_sam.baseName}"
+    tag "${raw_aln_sam}"
     publishDir "${params.outdir}/BWAmem", mode: 'copy',
         saveAs: {filename -> params.saveAlignedIntermediates ? "aligned_sorted"/$filename : null }
     
     input:
-    file raw_aln_sam
+    file "${raw_aln_sam}"
 
     output: 
-    file "${raw_aln_sam.baseName}.sorted.bam" into samples_sorted_bam
+    file "${raw_aln_sam}.sorted.bam" into samples_sorted_bam
 
     script:
     def avail_mem = task.memory == null ? '' : "-m ${task.memory.toBytes() / task.cpus}"
@@ -236,7 +236,7 @@ process sortSam {
     samtools sort \\
         $raw_aln_sam \\
         -@ ${task.cpus} $avail_mem \\
-        -o ${raw_aln_sam.baseName}.sorted.bam"
+        -o ${raw_aln_sam}.sorted.bam"
     """
 }
 
