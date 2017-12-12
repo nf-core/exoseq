@@ -295,7 +295,7 @@ process recal_bam_files {
     set val(name), file(markdup_bam) from samples_markdup_bam
 
     output:
-    set val(name), file("${sample}_recal.bam"), file ("${sample}_recal.bai") into samples_recal_bam
+    set val(name), file("${name}_recal.bam"), file("${name}_recal.bai") into samples_recal_bam
 
     script:
     """
