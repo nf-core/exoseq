@@ -94,6 +94,7 @@ params.bwa_index = params.metaFiles[ params.genome ] ? params.metaFiles[ params.
 
 //Output configuration
 params.outdir = './results'
+params.saveAlignedIntermediates = false
 
 //Configuration parameters
 params.clusterOptions = false
@@ -140,7 +141,7 @@ if (!params.metaFiles[ params.genome ] && ['gfasta', 'bwa_index', 'dbsnp', 'thou
 Channel
     .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
     .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
-.into { read_files_fastqc; read_files_trimming }
+    .into { read_files_fastqc; read_files_trimming }
 
 /*
  * STEP 1 - trim with trim galore
@@ -185,13 +186,13 @@ if(params.notrim){
  */
 
 process bwamem {
-    tag "$sample"
+    tag "$name"
 
     input:
-    set val(sample), file(reads) from trimmed_reads
+    set val(name), file(reads) from trimmed_reads
 
     output:
-    file("${sample}_bwa.sam") into raw_aln_sam
+    set val(name), file("${name}_bwa.sam") into raw_aln_sam
 
     script:
     if(params.singleEnd){
@@ -201,7 +202,7 @@ process bwamem {
         -k 2 \\
         $params.bwa_index \\
         $reads \\
-            > ${sample}_bwa.sam
+            > ${name}_bwa.sam
     """
     } else {
     """
@@ -210,7 +211,7 @@ process bwamem {
         -k 2 \\
         $params.bwa_index \\
         $reads\\
-            > ${sample}_bwa.sam
+            > ${name}_bwa.sam
     """
     }
 }
@@ -220,15 +221,16 @@ process bwamem {
 */ 
 
 process sortSam {
-    //tag "${raw_aln_sam}"
+    tag "${name}"
     publishDir "${params.outdir}/BWAmem", mode: 'copy',
         saveAs: {filename -> params.saveAlignedIntermediates ? "aligned_sorted"/$filename : null }
     
     input:
-    file(raw_sam) from raw_aln_sam
+    set val(name), file(raw_sam) from raw_aln_sam
+    
 
     output: 
-    file "${raw_sam}.sorted.bam" into samples_sorted_bam
+    set val(name), file("${raw_sam}.sorted.bam") into samples_sorted_bam
 
     script:
     def avail_mem = task.memory == null ? '' : "-m ${task.memory.toBytes() / task.cpus}"
@@ -245,23 +247,23 @@ process sortSam {
 */ 
 
 process markDuplicates {
-    tag "$sample"
-    publishDir "${params.outdir}/${sample}/metrics", mode: 'copy',
+    tag "${name}"
+    publishDir "${params.outdir}/${name}/metrics", mode: 'copy',
         saveAs: { filename -> filename.indexOf(".dup_metrics") > 0 ? filename : null }
 
     input:
-    file(sorted_bam) from samples_sorted_bam
+    set val(name), file(sorted_bam) from samples_sorted_bam
 
     output:
-    file("${sample}_markdup.bam") into samples_markdup_bam
-    file "${sample}.dup_metrics" into markdup_results
+    set val(name), file("${name}_markdup.bam") into samples_markdup_bam
+    file("${name}.dup_metrics") into markdup_results
 
     script:
     """
     java -jar \$PICARD_HOME/picard.jar MarkDuplicates \\
         INPUT=$sorted_bam \\
-        OUTPUT=${sample}_markdup.bam \\
-        METRICS_FILE=${sample}.dup_metrics \\
+        OUTPUT=${name}_markdup.bam \\
+        METRICS_FILE=${name}.dup_metrics \\
         TMP_DIR=tmp \\
         VALIDATION_STRINGENCY=SILENT \\
         REMOVE_DUPLICATES=false \\
@@ -280,16 +282,16 @@ process markDuplicates {
         GA4GH_CLIENT_SECRETS=''
     """
 }
-
+/* 
 // Recalibrate the bam file with known variants
 process recal_bam_files {
-    tag "$sample"
+    tag "${prefix}"
 
     input:
-    file(markdup_bam) from samples_markdup_bam
+    set val(name), file(markdup_bam) from samples_markdup_bam
 
     output:
-    file("${sample}_recal.bam"), file("${sample}_recal.bai") into samples_recal_bam
+    set val(name), file("${sample}_recal.bam"), file ("${sample}_recal.bai") into samples_recal_bam
 
     script:
     """
@@ -321,15 +323,15 @@ process recal_bam_files {
 
 // Realign the bam files based on known variants
 process realign {
-    tag "$sample"
+    tag "${prefix}"
     publishDir "${params.outdir}/${sample}/alignment", mode: 'copy',
         saveAs: {filename -> filename.replaceFirst(/realign/, "sorted_dupmarked_recalibrated_realigned")}
 
     input:
-    file(recal_bam), file(recal_bam_ind) from samples_recal_bam
+    set file(recal_bam), file(recal_bam_ind) from samples_recal_bam
 
     output:
-    file("${sample}_realign.bam"), file("${sample}_realign.bai") into bam_vcall, bam_metrics
+    file("${sample}_realign.{bam,bai}") into (bam_vcall, bam_metrics)
 
     script:
     """
@@ -351,11 +353,11 @@ process realign {
 
 // Calculate certain metrics
 process calculateMetrics {
-    tag "$sample"
+    tag "${prefix}"
     publishDir "${params.outdir}/${sample}/metrics", mode: 'copy'
 
     input:
-    file(aligned_bam), file(aligned_bam_ind) from bam_metrics
+    set file(aligned_bam), file(aligned_bam_ind) from bam_metrics
 
     output:
     file("*{metrics,pdf}") into metric_files
@@ -417,7 +419,7 @@ process calculateMetrics {
 
 // Call variants
 process variantCall {
-    tag "$sample"
+    tag "${prefix}"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy',
         saveAs: {filename -> filename.replaceFirst(/variants/, "raw_variants")}
 
@@ -447,7 +449,7 @@ process variantCall {
 
 // Select variants
 process variantSelect {
-    tag "$sample"
+    tag "${prefix}"
 
     input:
     set val(sample), file(raw_vcf), file(raw_vcf_idx) from raw_variants
@@ -478,14 +480,14 @@ process variantSelect {
 
 // Filter SNP
 process filterSnp {
-    tag "$sample"
+    tag "${prefix}"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
 
     input:
-    set val(sample), file(raw_snp), file(raw_snp_idx) from raw_snp
+    set file(raw_snp), file(raw_snp_idx) from raw_snp
 
     output:
-    set val(sample), file("${sample}_filtered_snp.vcf"), file("${sample}_filtered_snp.vcf.idx") into filtered_snp
+    set file("${sample}_filtered_snp.vcf"), file("${sample}_filtered_snp.vcf.idx") into filtered_snp
 
     script:
     """
@@ -505,31 +507,31 @@ process filterSnp {
 
     java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T ApplyRecalibration \\
         -R $params.gfasta \\
-        --out ${sample}_filtered_snp.vcf \\
+        --out ${prefix}_filtered_snp.vcf \\
         --input $raw_snp \\
         --mode SNP \\
-        --tranches_file ${sample}_snp.tranches \\
-        --recal_file ${sample}_snp.recal
+        --tranches_file ${prefix}_snp.tranches \\
+        --recal_file ${prefix}_snp.recal
     """
 }
 
 // Filter indels
 process filterIndel {
-    tag "$sample"
-    publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
+    tag "${prefix}"
+    publishDir "${params.outdir}/${prefix}/variants", mode: 'copy'
 
     input:
-    set val(sample), file(raw_indel), file(raw_indel_idx) from raw_indels
+    set file(raw_indel), file(raw_indel_idx) from raw_indels
 
     output:
-    set val(sample), file("${sample}_filtered_indels.vcf"), file("${sample}_filtered_indels.vcf.idx") into filtered_indels
+    set file("${prefix}_filtered_indels.vcf"), file("${prefix}_filtered_indels.vcf.idx") into filtered_indels
 
     script:
     """
     java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T VariantFiltration \\
         -R $params.gfasta \\
         --variant $raw_indel \\
-        --out ${sample}_filtered_indels.vcf \\
+        --out ${prefix}_filtered_indels.vcf \\
         --filterName GATKStandardQD \\
         --filterExpression "QD < 2.0" \\
         --filterName GATKStandardReadPosRankSum \\
@@ -550,10 +552,10 @@ process combineVariants {
     tag "$sample"
 
     input:
-    set val(sample), file(fsnp), file(fsnp_idx), file(findel), file(findel_idx) from variants_filtered
+    set file(fsnp), file(fsnp_idx), file(findel), file(findel_idx) from variants_filtered
 
     output:
-    set val(sample), file("${sample}_combined_variants.vcf"), file("${sample}_combined_variants.vcf.idx") into combined_variants
+    set file("${sample}_combined_variants.vcf"), file("${sample}_combined_variants.vcf.idx") into (combined_variants_evaluate,combined_variants)
 
     script:
     """
@@ -567,40 +569,13 @@ process combineVariants {
     """
 }
 
-// Group filted bam and vcf for each sample for phasing
-bam_phasing
-    .cross(combined_variants)
-    .map{ it -> [it[0][0], it[0][1], it[0][2], it[1][1], it[1][2]] }
-    .set{ files_for_phasing }
-
-// Indetifying haplotypes and create phasing between them
-process haplotypePhasing {
-    tag "$sample"
-    publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
-
-    input:
-    set val(sample), file(bam), file(bam_ind), file(vcf), file(vcf_ind) from files_for_phasing
-
-    output:
-    set val(sample), file("${sample}_combined_phased_variants.vcf"), file("${sample}_combined_phased_variants.vcf.idx") into vcf_eval, vcf_anno
-
-    script:
-    """
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T ReadBackedPhasing \\
-        -R $params.gfasta \\
-        -I $bam \\
-        --variant $vcf \\
-        --out ${sample}_combined_phased_variants.vcf
-    """
-}
-
 // Evaluate variants
 process variantEvaluate {
     tag "$sample"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
 
     input:
-    set val(sample), file(phased_vcf), file(phased_vcf_ind) from vcf_eval
+    set file("${sample}_combined_variants.vcf"), file("${sample}_combined_variants.vcf.idx") from combined_variants_evaluate
 
     output:
     file "${sample}_combined_phased_variants.eval"
@@ -629,7 +604,7 @@ process variantAnnotate {
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
 
     input:
-    set val(sample), file(phased_vcf), file(phased_vcf_ind) from vcf_anno
+    set file(phased_vcf), file(phased_vcf_ind) from combined_variants
 
     output:
     file "*.{vcf,idx,snpeff}"
@@ -651,4 +626,4 @@ process variantAnnotate {
         --snpEffFile ${sample}_combined_phased_variants.snpeff \\
         --out ${sample}_combined_phased_annotated_variants.vcf
     """
-}
+} */
