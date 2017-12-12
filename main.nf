@@ -191,7 +191,7 @@ process bwamem {
     set val(sample), file(reads) from trimmed_reads
 
     output:
-    set val(sample), file("${sample}_bwa.sam") into raw_aln_sam
+    file("${sample}_bwa.sam") into raw_aln_sam
 
     script:
     if(params.singleEnd){
@@ -220,23 +220,23 @@ process bwamem {
 */ 
 
 process sortSam {
-    tag "${raw_aln_sam}"
+    //tag "${raw_aln_sam}"
     publishDir "${params.outdir}/BWAmem", mode: 'copy',
         saveAs: {filename -> params.saveAlignedIntermediates ? "aligned_sorted"/$filename : null }
     
     input:
-    file "${raw_aln_sam}"
+    file(raw_sam) from raw_aln_sam
 
     output: 
-    file "${raw_aln_sam}.sorted.bam" into samples_sorted_bam
+    file "${raw_sam}.sorted.bam" into samples_sorted_bam
 
     script:
     def avail_mem = task.memory == null ? '' : "-m ${task.memory.toBytes() / task.cpus}"
     """
     samtools sort \\
-        $raw_aln_sam \\
+        $raw_sam \\
         -@ ${task.cpus} $avail_mem \\
-        -o ${raw_aln_sam}.sorted.bam"
+        -o ${raw_sam}.sorted.bam
     """
 }
 
@@ -250,10 +250,10 @@ process markDuplicates {
         saveAs: { filename -> filename.indexOf(".dup_metrics") > 0 ? filename : null }
 
     input:
-    set val(sample), file(sorted_bam) from samples_sorted_bam
+    file(sorted_bam) from samples_sorted_bam
 
     output:
-    set val(sample), file("${sample}_markdup.bam") into samples_markdup_bam
+    file("${sample}_markdup.bam") into samples_markdup_bam
     file "${sample}.dup_metrics" into markdup_results
 
     script:
@@ -286,10 +286,10 @@ process recal_bam_files {
     tag "$sample"
 
     input:
-    set val(sample), file(markdup_bam) from samples_markdup_bam
+    file(markdup_bam) from samples_markdup_bam
 
     output:
-    set val(sample), file("${sample}_recal.bam"), file("${sample}_recal.bai") into samples_recal_bam
+    file("${sample}_recal.bam"), file("${sample}_recal.bai") into samples_recal_bam
 
     script:
     """
@@ -326,10 +326,10 @@ process realign {
         saveAs: {filename -> filename.replaceFirst(/realign/, "sorted_dupmarked_recalibrated_realigned")}
 
     input:
-    set val(sample), file(recal_bam), file(recal_bam_ind) from samples_recal_bam
+    file(recal_bam), file(recal_bam_ind) from samples_recal_bam
 
     output:
-    set val(sample), file("${sample}_realign.bam"), file("${sample}_realign.bai") into bam_vcall, bam_phasing, bam_metrics
+    file("${sample}_realign.bam"), file("${sample}_realign.bai") into bam_vcall, bam_metrics
 
     script:
     """
@@ -355,7 +355,7 @@ process calculateMetrics {
     publishDir "${params.outdir}/${sample}/metrics", mode: 'copy'
 
     input:
-    set val(sample), file(aligned_bam), file(aligned_bam_ind) from bam_metrics
+    file(aligned_bam), file(aligned_bam_ind) from bam_metrics
 
     output:
     file("*{metrics,pdf}") into metric_files
