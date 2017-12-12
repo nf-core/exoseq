@@ -70,6 +70,7 @@ params.help = false
 params.reads = false
 params.singleEnd = false
 params.genome = false
+params.run_id = false
 
 //Clipping options
 params.notrim = false
@@ -198,6 +199,7 @@ process bwamem {
     if(params.singleEnd){
         """
          bwa mem \\
+        -R '@RG\tID:${params.run_id}\tSM:${params.run_id}' \\ 
         -t ${task.cpus} \\
         -k 2 \\
         $params.bwa_index \\
@@ -207,6 +209,7 @@ process bwamem {
     } else {
     """
         bwa mem \\
+        -R '@RG\tID:${params.run_id}\tSM:${params.run_id}' \\ 
         -t ${task.cpus} \\
         -k 2 \\
         $params.bwa_index \\
@@ -282,10 +285,10 @@ process markDuplicates {
         GA4GH_CLIENT_SECRETS=''
     """
 }
-/* 
+
 // Recalibrate the bam file with known variants
 process recal_bam_files {
-    tag "${prefix}"
+    tag "${name}"
 
     input:
     set val(name), file(markdup_bam) from samples_markdup_bam
@@ -295,10 +298,10 @@ process recal_bam_files {
 
     script:
     """
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T BaseRecalibrator \\
+    gatk -T BaseRecalibrator \\
         -I $markdup_bam \\
         -R $params.gfasta \\
-        -o ${sample}_table.recal \\
+        -o ${name}_table.recal \\
         -cov ReadGroupCovariate \\
         -cov QualityScoreCovariate \\
         -cov CycleCovariate \\
@@ -309,11 +312,11 @@ process recal_bam_files {
         --knownSites $params.dbsnp \\
         -l INFO
 
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T PrintReads \\
-        -BQSR ${sample}_table.recal \\
+    gatk -T PrintReads \\
+        -BQSR ${name}_table.recal \\
         -I $markdup_bam \\
         -R $params.gfasta \\
-        -o ${sample}_recal.bam \\
+        -o ${name}_recal.bam \\
         -baq RECALCULATE \\
         -U \\
         -OQ \\
@@ -321,32 +324,33 @@ process recal_bam_files {
     """
 }
 
+
 // Realign the bam files based on known variants
 process realign {
-    tag "${prefix}"
-    publishDir "${params.outdir}/${sample}/alignment", mode: 'copy',
+    tag "${name}"
+    publishDir "${params.outdir}/${name}/alignment", mode: 'copy',
         saveAs: {filename -> filename.replaceFirst(/realign/, "sorted_dupmarked_recalibrated_realigned")}
 
     input:
     set file(recal_bam), file(recal_bam_ind) from samples_recal_bam
 
     output:
-    file("${sample}_realign.{bam,bai}") into (bam_vcall, bam_metrics)
+    file("${name}_realign.{bam,bai}") into (bam_vcall, bam_metrics)
 
     script:
     """
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T RealignerTargetCreator \\
+    gatk -T RealignerTargetCreator \\
         -I $recal_bam \\
         -R $params.gfasta \\
-        -o ${sample}_realign.intervals \\
+        -o ${name}_realign.intervals \\
         --known $params.dbsnp \\
         -l INFO
 
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T IndelRealigner \\
+    gatk -T IndelRealigner \\
         -I $recal_bam \\
         -R $params.gfasta \\
-        -targetIntervals ${sample}_realign.intervals \\
-        -o ${sample}_realign.bam \\
+        -targetIntervals ${name}_realign.intervals \\
+        -o ${name}_realign.bam \\
         -l INFO
     """
 }
@@ -364,7 +368,7 @@ process calculateMetrics {
 
     script:
     """
-    java -jar \$PICARD_HOME/picard.jar CollectAlignmentSummaryMetrics \\
+    picard CollectAlignmentSummaryMetrics \\
         INPUT=$aligned_bam \\
         OUTPUT=${sample}.align_metrics \\
         REFERENCE_SEQUENCE=$params.gfasta \\
@@ -416,7 +420,7 @@ process calculateMetrics {
         GA4GH_CLIENT_SECRETS=''
     """
 }
-
+/*
 // Call variants
 process variantCall {
     tag "${prefix}"
