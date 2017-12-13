@@ -362,7 +362,7 @@ process realign {
     set val(name), file(recal_bam), file(recal_bam_ind) from samples_recal_bam
 
     output:
-    set val(name), file("${name}_realign.{bam,bai}") into (bam_vcall, bam_metrics)
+    set val(name), file("${name}_realign.bam"), file("${name}_realign.bai") into (bam_vcall, bam_metrics)
 
     script:
     """
@@ -395,6 +395,7 @@ process calculateMetrics {
 
     script:
     """
+    echo $realign_bam
     picard CollectAlignmentSummaryMetrics \\
         INPUT=$realign_bam \\
         OUTPUT=${name}.align_metrics \\
@@ -661,10 +662,8 @@ process variantAnnotate {
 }
 
 
-
 /*
- * STEP X MultiQC
- */
+
 
 process multiqc {
     tag "$nameprefix"
@@ -691,5 +690,6 @@ process multiqc {
     """
     multiqc -f $rtitle $rfilename --config $multiqc_config . 2>&1
     """
+
 }
- 
+ */
