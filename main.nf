@@ -359,7 +359,7 @@ process realign {
 // Calculate certain metrics
 process calculateMetrics {
     tag "${name}"
-    publishDir "${params.outdir}/${sample}/metrics", mode: 'copy'
+    publishDir "${params.outdir}/${namesample}/metrics", mode: 'copy'
 
     input:
     set val(name), file(aligned_bam), file(aligned_bam_ind) from bam_metrics
@@ -371,7 +371,7 @@ process calculateMetrics {
     """
     picard CollectAlignmentSummaryMetrics \\
         INPUT=$aligned_bam \\
-        OUTPUT=${sample}.align_metrics \\
+        OUTPUT=${name}.align_metrics \\
         REFERENCE_SEQUENCE=$params.gfasta \\
         VALIDATION_STRINGENCY=SILENT \\
         MAX_INSERT_SIZE=100000 \\
@@ -387,10 +387,10 @@ process calculateMetrics {
         CREATE_MD5_FILE=false \\
         GA4GH_CLIENT_SECRETS=''
 
-    java -jar \$PICARD_HOME/picard.jar CollectInsertSizeMetrics \\
-        HISTOGRAM_FILE=${sample}_insert.pdf \\
+    picard CollectInsertSizeMetrics \\
+        HISTOGRAM_FILE=${name}_insert.pdf \\
         INPUT=$aligned_bam \\
-        OUTPUT=${sample}.insert_metrics \\
+        OUTPUT=${name}.insert_metrics \\
         VALIDATION_STRINGENCY=SILENT \\
         DEVIATIONS=10.0 \\
         MINIMUM_PCT=0.05 \\
@@ -405,11 +405,11 @@ process calculateMetrics {
         CREATE_MD5_FILE=false \\
         GA4GH_CLIENT_SECRETS=''
 
-    java -jar \$PICARD_HOME/picard.jar CalculateHsMetrics \\
+    picard CalculateHsMetrics \\
         BAIT_INTERVALS=$params.bait \\
         TARGET_INTERVALS=$params.target \\
         INPUT=$aligned_bam \\
-        OUTPUT=${sample}.hs_metrics \\
+        OUTPUT=${name}.hs_metrics \\
         METRIC_ACCUMULATION_LEVEL="ALL_READS" \\
         VERBOSITY=INFO \\
         VALIDATION_STRINGENCY=SILENT \\
@@ -432,11 +432,11 @@ process variantCall {
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_vcall
 
     output:
-    set val(name), file("${sample}_variants.vcf"), file("${sample}_variants.vcf.idx") into raw_variants
+    set val(name), file("${name}_variants.vcf"), file("${name}_variants.vcf.idx") into raw_variants
 
     script:
     """
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T HaplotypeCaller \\
+    gatk -T HaplotypeCaller \\
         -I $realign_bam \\
         -R $params.gfasta \\
         -o ${name}_variants.vcf \\
@@ -460,18 +460,18 @@ process variantSelect {
     set val(name), file(raw_vcf), file(raw_vcf_idx) from raw_variants
 
     output:
-    set val(name), file("${sample}_snp.vcf"), file("${sample}_snp.vcf.idx") into raw_snp
-    set val(name), file("${sample}_indels.vcf"), file("${sample}_indels.vcf.idx") into raw_indels
+    set val(name), file("${name}_snp.vcf"), file("${name}_snp.vcf.idx") into raw_snp
+    set val(name), file("${name}_indels.vcf"), file("${name}_indels.vcf.idx") into raw_indels
 
     script:
     """
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T SelectVariants \\
+    gatk -T SelectVariants \\
         -R $params.gfasta \\
         --variant $raw_vcf \\
         --out ${name}_snp.vcf \\
         --selectTypeToInclude SNP
 
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T SelectVariants \\
+    gatk -T SelectVariants \\
         -R $params.gfasta \\
         --variant $raw_vcf \\
         --out ${name}_indels.vcf \\
@@ -496,7 +496,7 @@ process filterSnp {
 
     script:
     """
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T VariantRecalibrator \\
+    gatk -T VariantRecalibrator \\
         -R $params.gfasta \\
         --input $raw_snp \\
         --maxGaussians 4 \\
@@ -510,7 +510,7 @@ process filterSnp {
         -an FS \\
         -an MQ
 
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T ApplyRecalibration \\
+    gatk -T ApplyRecalibration \\
         -R $params.gfasta \\
         --out ${prefix}_filtered_snp.vcf \\
         --input $raw_snp \\
@@ -533,7 +533,7 @@ process filterIndel {
 
     script:
     """
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T VariantFiltration \\
+    gatk -T VariantFiltration \\
         -R $params.gfasta \\
         --variant $raw_indel \\
         --out ${name}_filtered_indels.vcf \\
@@ -587,7 +587,7 @@ process variantEvaluate {
 
     script:
     """
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T VariantEval \\
+    gatk -T VariantEval \\
         -R $params.gfasta \\
         --eval $phased_vcf \\
         --dbsnp $params.dbsnp \\
@@ -624,7 +624,7 @@ process variantAnnotate {
         -filterInterval $params.target_bed GRCh37.75 $phased_vcf \\
             > ${sample}_combined_phased_variants.snpeff
 
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T VariantAnnotator \\
+    gatk -T VariantAnnotator \\
         -R $params.gfasta \\
         -A SnpEff \\
         --variant $phased_vcf \\
