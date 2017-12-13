@@ -382,10 +382,36 @@ process realign {
     """
 }
 
+//Use QualiMap2, which is much nicer.
+process qualiMap {
+    tag "${name}"
+    publishDir "${params.outdir}/${name}/qualimap", mode: 'copy'
+    
+    input:
+    set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
+
+    output:
+    file "${name.baseName}_qualimap" into qualimap_results
+
+    script:
+    gcref = ''
+    if(params.genome == 'GRCh37') gcref = '-gd HUMAN'
+    if(params.genome == 'GRCm38') gcref = '-gd MOUSE'
+    """
+    qualimap bamqc $gcref \\
+    -bam $realign_bam \\
+    -outdir ${name.baseName}_qualimap \\
+    --skip-duplicated \\
+    --collect-overlap-pairs \\
+    -nt ${task.cpus} \\
+    --java-mem-size=${task.memory.toGiga()}G \\
+    """
+}
+/* 
 // Calculate certain metrics
 process calculateMetrics {
     tag "${name}"
-    publishDir "${params.outdir}/${namesample}/metrics", mode: 'copy'
+    publishDir "${params.outdir}/${name}/metrics", mode: 'copy'
 
     input:
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
@@ -431,7 +457,7 @@ process calculateMetrics {
         CREATE_MD5_FILE=false \\
         GA4GH_CLIENT_SECRETS=''
     """
-}
+} */
 
 // Call variants
 process variantCall {
