@@ -391,7 +391,7 @@ process qualiMap {
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
 
     output:
-    file "${name.baseName}_qualimap" into qualimap_results
+    file "${name}_qualimap" into qualimap_results
 
     script:
     gcref = ''
@@ -400,64 +400,13 @@ process qualiMap {
     """
     qualimap bamqc $gcref \\
     -bam $realign_bam \\
-    -outdir ${name.baseName}_qualimap \\
+    -outdir ${name}_qualimap \\
     --skip-duplicated \\
     --collect-overlap-pairs \\
     -nt ${task.cpus} \\
     --java-mem-size=${task.memory.toGiga()}G \\
     """
 }
-/* 
-// Calculate certain metrics
-process calculateMetrics {
-    tag "${name}"
-    publishDir "${params.outdir}/${name}/metrics", mode: 'copy'
-
-    input:
-    set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
-
-    output:
-    file("*{metrics,pdf}") into metric_files
-
-    script:
-    """
-    picard CollectAlignmentSummaryMetrics \\
-        INPUT=$realign_bam \\
-        OUTPUT=${name}.align_metrics \\
-        REFERENCE_SEQUENCE=$params.gfasta \\
-        VALIDATION_STRINGENCY=SILENT \\
-        MAX_INSERT_SIZE=100000 \\
-        ASSUME_SORTED=true \\
-        IS_BISULFITE_SEQUENCED=false \\
-        METRIC_ACCUMULATION_LEVEL="ALL_READS" \\
-        STOP_AFTER=0 \\
-        VERBOSITY=INFO \\
-        QUIET=false \\
-        COMPRESSION_LEVEL=5 \\
-        MAX_RECORDS_IN_RAM=500000 \\
-        CREATE_INDEX=false \\
-        CREATE_MD5_FILE=false \\
-        GA4GH_CLIENT_SECRETS=''
-
-    picard CollectInsertSizeMetrics \\
-        HISTOGRAM_FILE=${name}_insert.pdf \\
-        INPUT=$realign_bam \\
-        OUTPUT=${name}.insert_metrics \\
-        VALIDATION_STRINGENCY=SILENT \\
-        DEVIATIONS=10.0 \\
-        MINIMUM_PCT=0.05 \\
-        STOP_AFTER=0 \\
-        METRIC_ACCUMULATION_LEVEL="ALL_READS" \\
-        ASSUME_SORTED=true \\
-        VERBOSITY=INFO \\
-        QUIET=false \\
-        COMPRESSION_LEVEL=5 \\
-        MAX_RECORDS_IN_RAM=500000 \\
-        CREATE_INDEX=false \\
-        CREATE_MD5_FILE=false \\
-        GA4GH_CLIENT_SECRETS=''
-    """
-} */
 
 // Call variants
 process variantCall {
