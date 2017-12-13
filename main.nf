@@ -144,6 +144,32 @@ Channel
     .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
     .into { read_files_fastqc; read_files_trimming }
 
+
+/*
+* STEP 0 - FastQC
+*
+*/
+
+process fastqc {
+    tag "$name"
+    publishDir "${params.outdir}/fastqc", mode: 'copy',
+        saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
+
+    input:
+    set val(name), file(reads) from read_files_fastqc
+
+    output:
+    file '*_fastqc.{zip,html}' into fastqc_results
+    file '.command.out' into fastqc_stdout
+
+    script:
+    """
+    fastqc -q $reads
+    """
+}
+
+
+
 /*
  * STEP 1 - trim with trim galore
  */
@@ -362,7 +388,7 @@ process calculateMetrics {
     publishDir "${params.outdir}/${namesample}/metrics", mode: 'copy'
 
     input:
-    set val(name), file(aligned_bam), file(aligned_bam_ind) from bam_metrics
+    set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
 
     output:
     file("*{metrics,pdf}") into metric_files
@@ -370,7 +396,7 @@ process calculateMetrics {
     script:
     """
     picard CollectAlignmentSummaryMetrics \\
-        INPUT=$aligned_bam \\
+        INPUT=$realign_bam \\
         OUTPUT=${name}.align_metrics \\
         REFERENCE_SEQUENCE=$params.gfasta \\
         VALIDATION_STRINGENCY=SILENT \\
@@ -389,7 +415,7 @@ process calculateMetrics {
 
     picard CollectInsertSizeMetrics \\
         HISTOGRAM_FILE=${name}_insert.pdf \\
-        INPUT=$aligned_bam \\
+        INPUT=$realign_bam \\
         OUTPUT=${name}.insert_metrics \\
         VALIDATION_STRINGENCY=SILENT \\
         DEVIATIONS=10.0 \\
@@ -408,7 +434,7 @@ process calculateMetrics {
     picard CalculateHsMetrics \\
         BAIT_INTERVALS=$params.bait \\
         TARGET_INTERVALS=$params.target \\
-        INPUT=$aligned_bam \\
+        INPUT=$realign_bam \\
         OUTPUT=${name}.hs_metrics \\
         METRIC_ACCUMULATION_LEVEL="ALL_READS" \\
         VERBOSITY=INFO \\
@@ -425,7 +451,7 @@ process calculateMetrics {
 // Call variants
 process variantCall {
     tag "${name}"
-    publishDir "${params.outdir}/${sample}/variants", mode: 'copy',
+    publishDir "${params.outdir}/${name}/variants", mode: 'copy',
         saveAs: {filename -> filename.replaceFirst(/variants/, "raw_variants")}
 
     input:
@@ -436,6 +462,7 @@ process variantCall {
 
     script:
     """
+    echo $realign_bam
     gatk -T HaplotypeCaller \\
         -I $realign_bam \\
         -R $params.gfasta \\
@@ -631,4 +658,38 @@ process variantAnnotate {
         --snpEffFile ${sample}_combined_phased_variants.snpeff \\
         --out ${sample}_combined_phased_annotated_variants.vcf
     """
-} */
+}
+
+
+
+/*
+ * STEP X MultiQC
+ */
+
+process multiqc {
+    tag "$nameprefix"
+    publishDir "${params.outdir}/MultiQC", mode: 'copy'
+
+    input:
+    file multiqc_config
+    file (fastqc:'fastqc/*') from fastqc_results.collect()
+    file ('trimgalore/*') from trimgalore_results.collect()
+    file ('samtools/*') from samtools_stats.collect()
+    file ('picard/*') from picard_reports.collect()
+    file ('software_versions/*') from software_versions_yaml.collect()
+
+    output:
+    file '*multiqc_report.html' into multiqc_report
+    file '*_data' into multiqc_data
+    file '.command.err' into multiqc_stderr
+    val prefix into multiqc_prefix
+
+    script:
+    prefix = fastqc[0].toString() - '_fastqc.html' - 'fastqc/'
+    rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
+    rfilename = custom_runName ? "--filename " + custom_runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
+    """
+    multiqc -f $rtitle $rfilename --config $multiqc_config . 2>&1
+    """
+}
+ 
