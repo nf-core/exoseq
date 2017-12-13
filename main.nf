@@ -395,7 +395,6 @@ process calculateMetrics {
 
     script:
     """
-    echo $realign_bam
     picard CollectAlignmentSummaryMetrics \\
         INPUT=$realign_bam \\
         OUTPUT=${name}.align_metrics \\
@@ -425,21 +424,6 @@ process calculateMetrics {
         METRIC_ACCUMULATION_LEVEL="ALL_READS" \\
         ASSUME_SORTED=true \\
         VERBOSITY=INFO \\
-        QUIET=false \\
-        COMPRESSION_LEVEL=5 \\
-        MAX_RECORDS_IN_RAM=500000 \\
-        CREATE_INDEX=false \\
-        CREATE_MD5_FILE=false \\
-        GA4GH_CLIENT_SECRETS=''
-
-    picard CalculateHsMetrics \\
-        BAIT_INTERVALS=$params.bait \\
-        TARGET_INTERVALS=$params.target \\
-        INPUT=$realign_bam \\
-        OUTPUT=${name}.hs_metrics \\
-        METRIC_ACCUMULATION_LEVEL="ALL_READS" \\
-        VERBOSITY=INFO \\
-        VALIDATION_STRINGENCY=SILENT \\
         QUIET=false \\
         COMPRESSION_LEVEL=5 \\
         MAX_RECORDS_IN_RAM=500000 \\
@@ -592,7 +576,7 @@ process combineVariants {
 
     script:
     """
-    java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T CombineVariants \\
+    gatk -T CombineVariants \\
         -R $params.gfasta \\
         --out ${sample}_combined_variants.vcf \\
         --genotypemergeoption PRIORITIZE \\
