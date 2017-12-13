@@ -333,10 +333,10 @@ process realign {
         saveAs: {filename -> filename.replaceFirst(/realign/, "sorted_dupmarked_recalibrated_realigned")}
 
     input:
-    set file(recal_bam), file(recal_bam_ind) from samples_recal_bam
+    set val(name), file(recal_bam), file(recal_bam_ind) from samples_recal_bam
 
     output:
-    file("${name}_realign.{bam,bai}") into (bam_vcall, bam_metrics)
+    set val(name), file("${name}_realign.{bam,bai}") into (bam_vcall, bam_metrics)
 
     script:
     """
@@ -358,11 +358,11 @@ process realign {
 
 // Calculate certain metrics
 process calculateMetrics {
-    tag "${prefix}"
+    tag "${name}"
     publishDir "${params.outdir}/${sample}/metrics", mode: 'copy'
 
     input:
-    set file(aligned_bam), file(aligned_bam_ind) from bam_metrics
+    set val(name), file(aligned_bam), file(aligned_bam_ind) from bam_metrics
 
     output:
     file("*{metrics,pdf}") into metric_files
@@ -421,25 +421,25 @@ process calculateMetrics {
         GA4GH_CLIENT_SECRETS=''
     """
 }
-/*
+
 // Call variants
 process variantCall {
-    tag "${prefix}"
+    tag "${name}"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy',
         saveAs: {filename -> filename.replaceFirst(/variants/, "raw_variants")}
 
     input:
-    set val(sample), file(realign_bam), file(realign_bam_ind) from bam_vcall
+    set val(name), file(realign_bam), file(realign_bam_ind) from bam_vcall
 
     output:
-    set val(sample), file("${sample}_variants.vcf"), file("${sample}_variants.vcf.idx") into raw_variants
+    set val(name), file("${sample}_variants.vcf"), file("${sample}_variants.vcf.idx") into raw_variants
 
     script:
     """
     java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T HaplotypeCaller \\
         -I $realign_bam \\
         -R $params.gfasta \\
-        -o ${sample}_variants.vcf \\
+        -o ${name}_variants.vcf \\
         --annotation HaplotypeScore \\
         --annotation MappingQualityRankSumTest \\
         --annotation QualByDepth \\
@@ -454,27 +454,27 @@ process variantCall {
 
 // Select variants
 process variantSelect {
-    tag "${prefix}"
+    tag "${name}"
 
     input:
-    set val(sample), file(raw_vcf), file(raw_vcf_idx) from raw_variants
+    set val(name), file(raw_vcf), file(raw_vcf_idx) from raw_variants
 
     output:
-    set val(sample), file("${sample}_snp.vcf"), file("${sample}_snp.vcf.idx") into raw_snp
-    set val(sample), file("${sample}_indels.vcf"), file("${sample}_indels.vcf.idx") into raw_indels
+    set val(name), file("${sample}_snp.vcf"), file("${sample}_snp.vcf.idx") into raw_snp
+    set val(name), file("${sample}_indels.vcf"), file("${sample}_indels.vcf.idx") into raw_indels
 
     script:
     """
     java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T SelectVariants \\
         -R $params.gfasta \\
         --variant $raw_vcf \\
-        --out ${sample}_snp.vcf \\
+        --out ${name}_snp.vcf \\
         --selectTypeToInclude SNP
 
     java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T SelectVariants \\
         -R $params.gfasta \\
         --variant $raw_vcf \\
-        --out ${sample}_indels.vcf \\
+        --out ${name}_indels.vcf \\
         --selectTypeToInclude INDEL \\
         --selectTypeToInclude MIXED \\
         --selectTypeToInclude MNP \\
@@ -485,14 +485,14 @@ process variantSelect {
 
 // Filter SNP
 process filterSnp {
-    tag "${prefix}"
+    tag "${name}"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
 
     input:
-    set file(raw_snp), file(raw_snp_idx) from raw_snp
+    set val(name), file(raw_snp), file(raw_snp_idx) from raw_snp
 
     output:
-    set file("${sample}_filtered_snp.vcf"), file("${sample}_filtered_snp.vcf.idx") into filtered_snp
+    set val(name), file("${sample}_filtered_snp.vcf"), file("${sample}_filtered_snp.vcf.idx") into filtered_snp
 
     script:
     """
@@ -500,8 +500,8 @@ process filterSnp {
         -R $params.gfasta \\
         --input $raw_snp \\
         --maxGaussians 4 \\
-        --recal_file ${sample}_snp.recal \\
-        --tranches_file ${sample}_snp.tranches \\
+        --recal_file ${name}_snp.recal \\
+        --tranches_file ${name}_snp.tranches \\
         -resource:hapmap,VCF,known=false,training=true,truth=true,prior=15.0 $params.hapmap \\
         -resource:omni,VCF,known=false,training=true,truth=false,prior=12.0 $params.omni \\
         -resource:dbsnp,VCF,known=true,training=false,truth=false,prior=8.0 $params.dbsnp \\
@@ -522,21 +522,21 @@ process filterSnp {
 
 // Filter indels
 process filterIndel {
-    tag "${prefix}"
+    tag "${name}"
     publishDir "${params.outdir}/${prefix}/variants", mode: 'copy'
 
     input:
-    set file(raw_indel), file(raw_indel_idx) from raw_indels
+    set val(name), file(raw_indel), file(raw_indel_idx) from raw_indels
 
     output:
-    set file("${prefix}_filtered_indels.vcf"), file("${prefix}_filtered_indels.vcf.idx") into filtered_indels
+    set val(name), file("${prefix}_filtered_indels.vcf"), file("${prefix}_filtered_indels.vcf.idx") into filtered_indels
 
     script:
     """
     java -jar \$GATK_HOME/GenomeAnalysisTK.jar -T VariantFiltration \\
         -R $params.gfasta \\
         --variant $raw_indel \\
-        --out ${prefix}_filtered_indels.vcf \\
+        --out ${name}_filtered_indels.vcf \\
         --filterName GATKStandardQD \\
         --filterExpression "QD < 2.0" \\
         --filterName GATKStandardReadPosRankSum \\
