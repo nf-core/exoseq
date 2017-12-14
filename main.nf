@@ -71,6 +71,7 @@ params.reads = false
 params.singleEnd = false
 params.genome = false
 params.run_id = false
+params.exome = true
 
 //Clipping options
 params.notrim = false
