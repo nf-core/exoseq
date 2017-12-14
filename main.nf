@@ -421,6 +421,25 @@ process variantCall {
     set val(name), file("${name}_variants.vcf"), file("${name}_variants.vcf.idx") into raw_variants
 
     script:
+    if(params.exome){
+    """
+    gatk -T HaplotypeCaller \\
+        -I $realign_bam \\
+        -R $params.gfasta \\
+        -o ${name}_variants.vcf \\
+        -ERC GVCF \\
+        -L $params.target \\
+        --annotation HaplotypeScore \\
+        --annotation MappingQualityRankSumTest \\
+        --annotation QualByDepth \\
+        --annotation ReadPosRankSumTest \\
+        --annotation RMSMappingQuality \\
+        --annotation FisherStrand \\
+        --annotation Coverage \\
+        --standard_min_confidence_threshold_for_calling 30.0 \\
+        --dbsnp $params.dbsnp -l INFO
+    """
+    } else { //We have a winner (genome)
     """
     gatk -T HaplotypeCaller \\
         -I $realign_bam \\
@@ -436,7 +455,8 @@ process variantCall {
         --annotation Coverage \\
         --standard_min_confidence_threshold_for_calling 30.0 \\
         --dbsnp $params.dbsnp -l INFO
-    """
+    """    
+    }
 }
 
 // Select variants
