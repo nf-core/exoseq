@@ -426,6 +426,7 @@ process variantCall {
         -I $realign_bam \\
         -R $params.gfasta \\
         -o ${name}_variants.vcf \\
+        -ERC GVCF \\
         --annotation HaplotypeScore \\
         --annotation MappingQualityRankSumTest \\
         --annotation QualByDepth \\
