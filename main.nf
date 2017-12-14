@@ -152,7 +152,7 @@ Validate Input indices for BWA Mem and GATK
 * 
 */ 
 if(params.aligner == 'bwa' ){
-    bwa_index = Channel
+    bwaId = Channel
         .fromPath("${params.gfasta}.bwt")
         .ifEmpty { exit 1, "BWA index not found: ${params.gfasta}.bwt" }
 }
@@ -162,15 +162,21 @@ if(params.aligner == 'bwa' ){
 * 
 */
 
-if(params.aligner == 'bwa' && ){
+
+if(params.aligner == 'bwa' && !params.bwa_index){
+    //Create Channels
+    fasta_for_bwa_index = Channel
+        .fromPath("${params.gfasta}")
+    fasta_for_samtools_index = Channel
+        .fromPath("${params.gfasta}")
     //Create a BWA index for non-indexed genomes
     process makeBWAIndex {
-        tag gfasta
+        tag "$params.gfasta"
         publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
                    saveAs: { params.saveReference ? it : null }, mode: 'copy'
 
         input:
-        file fasta from params.gfasta
+        file fasta from fasta_for_bwa_index
 
         output:
         file "*.{amb,ann,bwt,pac,sa}" into bwa_index
@@ -182,12 +188,12 @@ if(params.aligner == 'bwa' && ){
     }
     //Create a FastA index for non-indexed genomes
     process makeFastaIndex {
-        tag gfasta
+        tag "$params.gfasta"
         publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
                    saveAs: { params.saveReference ? it : null }, mode: 'copy'
         
         input:
-        file fasta from params.gfasta
+        file fasta from fasta_for_samtools_index
 
         output:
         file "*.fai" into samtools_index
@@ -198,7 +204,6 @@ if(params.aligner == 'bwa' && ){
         """
     }
 }
-
 
 
 /*
@@ -223,7 +228,6 @@ process fastqc {
     fastqc -q $reads
     """
 }
-
 
 
 /*
@@ -273,6 +277,7 @@ process bwamem {
 
     input:
     set val(name), file(reads) from trimmed_reads
+    file(bwa_index) from bwa_index
 
     output:
     set val(name), file("${name}_bwa.sam") into raw_aln_sam
@@ -280,12 +285,12 @@ process bwamem {
     script:
     rg="\'@RG\\tID:${params.run_id}\\tSM:${params.run_id}\\tPL:illumina\'"
     if(params.singleEnd){
-        """
+    """
          bwa mem \\
         -R $rg \\
         -t ${task.cpus} \\
         -k 2 \\
-        $params.bwa_index \\
+        $params.gfasta \\
         $reads \\
             > ${name}_bwa.sam
     """
@@ -295,7 +300,7 @@ process bwamem {
         -R $rg \\
         -t ${task.cpus} \\
         -k 2 \\
-        $params.bwa_index \\
+        $params.gfasta \\
         $reads\\
             > ${name}_bwa.sam
     """
