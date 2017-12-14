@@ -549,7 +549,9 @@ process recalSNPs {
         --input $raw_snp \\
         --mode SNP \\
         --tranches_file ${name}_snp.tranches \\
-        --recal_file ${name}_snp.recal
+        --recal_file ${name}_snp.recal \\
+        --ts_filter_level 99.5 \\
+        -mode SNP 
     """
 }
 
@@ -575,7 +577,7 @@ process recalIndels {
         -resource:mills,known=false,training=true,truth=true,prior=12.0 $params.mills \\
         -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 $params.dbsnp \\
         -an QD -an DP -an FS -an SOR -an ReadPosRankSum -an MQRankSum -an InbreedingCoeff \\
-        -mode INDEL \
+        -mode INDEL 
 
     gatk -T ApplyRecalibration \\
         -R $params.gfasta \\
@@ -583,17 +585,19 @@ process recalIndels {
         --input $raw_indel \\
         --mode SNP \\
         --tranches_file ${name}_indel.tranches \\
-        --recal_file ${name}_indel.recal
+        --recal_file ${name}_indel.recal \\
+        --ts_filter_level 99.0 \\
+        -mode INDEL
     """
 }
 
-// Group filted snp and indels for each sample
+// Group SNPs and Indel again
 filtered_snp
     .cross(filtered_indels)
     .map{ it -> [it[0][0], it[0][1], it[0][2], it[1][1], it[1][2]] }
     .set{ variants_filtered }
 
-// Combine filtered snp and indels for each sample
+// Combine SNP + Indel Files into a single VCF again
 process combineVariants {
     tag "$name"
 
@@ -612,35 +616,6 @@ process combineVariants {
         --variant:${name}_SNP_filtered $fsnp \\
         --variant:${name}_indels_filtered $findel \\
         --rod_priority_list ${name}_SNP_filtered,${name}_indels_filtered
-    """
-}
-
-// Evaluate variants
-process variantEvaluate {
-    tag "$name"
-    publishDir "${params.outdir}/${name}/variants", mode: 'copy'
-
-    input:
-    set file("${name}_combined_variants.vcf"), file("${name}_combined_variants.vcf.idx") from combined_variants_evaluate
-
-    output:
-    file "${name}_combined_phased_variants.eval"
-
-    script:
-    """
-    gatk -T VariantEval \\
-        -R $params.gfasta \\
-        --eval $phased_vcf \\
-        --dbsnp $params.dbsnp \\
-        -o ${name}_combined_phased_variants.eval \\
-        -L $params.target \\
-        --doNotUseAllStandardModules \\
-        --evalModule TiTvVariantEvaluator \\
-        --evalModule CountVariants \\
-        --evalModule CompOverlap \\
-        --evalModule ValidationReport \\
-        --stratificationModule Filter \\
-        -l INFO
     """
 }
 
@@ -671,6 +646,36 @@ process variantAnnotate {
         --variant $phased_vcf \\
         --snpEffFile ${name}_combined_phased_variants.snpeff \\
         --out ${name}_combined_phased_annotated_variants.vcf
+    """
+}
+
+
+// Evaluate variants
+process variantEvaluate {
+    tag "$name"
+    publishDir "${params.outdir}/${name}/variants", mode: 'copy'
+
+    input:
+    set file("${name}_combined_variants.vcf"), file("${name}_combined_variants.vcf.idx") from combined_variants_evaluate
+
+    output:
+    file "${name}_combined_phased_variants.eval"
+
+    script:
+    """
+    gatk -T VariantEval \\
+        -R $params.gfasta \\
+        --eval $phased_vcf \\
+        --dbsnp $params.dbsnp \\
+        -o ${name}_combined_phased_variants.eval \\
+        -L $params.target \\
+        --doNotUseAllStandardModules \\
+        --evalModule TiTvVariantEvaluator \\
+        --evalModule CountVariants \\
+        --evalModule CompOverlap \\
+        --evalModule ValidationReport \\
+        --stratificationModule Filter \\
+        -l INFO
     """
 }
 
