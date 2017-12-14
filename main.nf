@@ -422,7 +422,6 @@ process variantCall {
 
     script:
     """
-    echo $realign_bam
     gatk -T HaplotypeCaller \\
         -I $realign_bam \\
         -R $params.gfasta \\
