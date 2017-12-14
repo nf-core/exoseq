@@ -429,6 +429,7 @@ process variantCall {
         -R $params.gfasta \\
         -o ${name}_variants.vcf \\
         -ERC GVCF \\
+        -nt $task.cpus \\
         -L $params.target \\
         --annotation HaplotypeScore \\
         --annotation MappingQualityRankSumTest \\
@@ -447,6 +448,7 @@ process variantCall {
         -R $params.gfasta \\
         -o ${name}_variants.vcf \\
         -ERC GVCF \\
+        -nt $task.cpus \\
         --annotation HaplotypeScore \\
         --annotation MappingQualityRankSumTest \\
         --annotation QualByDepth \\
@@ -460,12 +462,34 @@ process variantCall {
     }
 }
 
+
+//Combine Genotypes following Best Practices guidelines
+
+process genotypegvcfs{
+    tag "${name}"
+
+    input:
+    set val(name), file(raw_vcf), file(raw_vcf_idx) from raw_variants
+
+    output:
+    set val(name), file("${name}_gvcf.vcf"), file("${name}_gvcf.vcf.idx") into raw_gvcfs
+
+    script:
+    """
+    gatk -T GenotypeVCFS \\
+    -R $params.gfasta \\
+    --variant $raw_vcf \\
+    -nt $task.cpus \\
+    -o ${name}_gvcf.vcf \\
+    """
+}
+
 // Select variants
 process variantSelect {
     tag "${name}"
 
     input:
-    set val(name), file(raw_vcf), file(raw_vcf_idx) from raw_variants
+    set val(name), file(raw_vcf), file(raw_vcf_idx) from raw_gvcfs
 
     output:
     set val(name), file("${name}_snp.vcf"), file("${name}_snp.vcf.idx") into raw_snp
@@ -510,11 +534,10 @@ process filterSnp {
         --maxGaussians 4 \\
         --recal_file ${name}_snp.recal \\
         --tranches_file ${name}_snp.tranches \\
-        -resource:thousandg,VCF,known=false,training=true,truth=true,prior=15.0 $params.thousandg \\
-        -resource:clinvar,VCF,known=false,training=true,truth=false,prior=12.0 $params.clinvar \\
-        -resource:exac,VCF,known=false,training=true,truth=false,prior=10.0 $params.exac \\
-        -resource:gnomad,VCF,known=false,training=true,truth=false,prior=9.0 $params.gnomad \\
-        -resource:dbsnp,VCF,known=true,training=false,truth=false,prior=8.0 $params.dbsnp \\
+        -resource:hapmap,known=false,training=true,truth=true,prior=15.0 $params.hapmap \\
+        -resource:omni,known=false,training=true,truth=true,prior=12.0 $params.omni \\
+        -resource:1000G,known=false,training=true,truth=false,prior=10.0 $params.thousandg \\
+        -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 $params.dbsnp \\
         --mode SNP \\
         -an QD \\
         -an FS \\
