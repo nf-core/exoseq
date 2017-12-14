@@ -72,6 +72,8 @@ params.singleEnd = false
 params.genome = false
 params.run_id = false
 params.exome = true
+params.aligner = 'bwa' //Default, but stay tuned for later ;-) 
+params.saveReference = true
 
 //Clipping options
 params.notrim = false
@@ -144,6 +146,59 @@ Channel
     .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
     .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
     .into { read_files_fastqc; read_files_trimming }
+
+/**
+Validate Input indices for BWA Mem and GATK
+* 
+*/ 
+if(params.aligner == 'bwa' ){
+    bwa_index = Channel
+        .fromPath("${params.gfasta}.bwt")
+        .ifEmpty { exit 1, "BWA index not found: ${params.gfasta}.bwt" }
+}
+
+/**
+* Build index for BWA if non exists
+* 
+*/
+
+if(params.aligner == 'bwa' && ){
+    //Create a BWA index for non-indexed genomes
+    process makeBWAIndex {
+        tag gfasta
+        publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
+                   saveAs: { params.saveReference ? it : null }, mode: 'copy'
+
+        input:
+        file fasta from params.gfasta
+
+        output:
+        file "*.{amb,ann,bwt,pac,sa}" into bwa_index
+
+        script:
+        """
+        bwa index $fasta
+        """
+    }
+    //Create a FastA index for non-indexed genomes
+    process makeFastaIndex {
+        tag gfasta
+        publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
+                   saveAs: { params.saveReference ? it : null }, mode: 'copy'
+        
+        input:
+        file fasta from params.gfasta
+
+        output:
+        file "*.fai" into samtools_index
+
+        script:
+        """
+        samtools faidx $fasta
+        """
+    }
+}
+
 
 
 /*
