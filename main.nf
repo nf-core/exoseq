@@ -489,8 +489,10 @@ process filterSnp {
         --maxGaussians 4 \\
         --recal_file ${name}_snp.recal \\
         --tranches_file ${name}_snp.tranches \\
-        -resource:hapmap,VCF,known=false,training=true,truth=true,prior=15.0 $params.hapmap \\
-        -resource:omni,VCF,known=false,training=true,truth=false,prior=12.0 $params.omni \\
+        -resource:thousandg,VCF,known=false,training=true,truth=true,prior=15.0 $params.thousandg \\
+        -resource:clinvar,VCF,known=false,training=true,truth=false,prior=12.0 $params.clinvar \\
+        -resource:exac,VCF,known=false,training=true,truth=false,prior=10.0 $params.exac \\
+        -resource:gnomad,VCF,known=false,training=true,truth=false,prior=9.0 $params.gnomad \\
         -resource:dbsnp,VCF,known=true,training=false,truth=false,prior=8.0 $params.dbsnp \\
         --mode SNP \\
         -an QD \\
@@ -499,24 +501,24 @@ process filterSnp {
 
     gatk -T ApplyRecalibration \\
         -R $params.gfasta \\
-        --out ${prefix}_filtered_snp.vcf \\
+        --out ${name}_filtered_snp.vcf \\
         --input $raw_snp \\
         --mode SNP \\
-        --tranches_file ${prefix}_snp.tranches \\
-        --recal_file ${prefix}_snp.recal
+        --tranches_file ${name}_snp.tranches \\
+        --recal_file ${name}_snp.recal
     """
 }
 
 // Filter indels
 process filterIndel {
     tag "${name}"
-    publishDir "${params.outdir}/${prefix}/variants", mode: 'copy'
+    publishDir "${params.outdir}/${name}/variants", mode: 'copy'
 
     input:
     set val(name), file(raw_indel), file(raw_indel_idx) from raw_indels
 
     output:
-    set val(name), file("${prefix}_filtered_indels.vcf"), file("${prefix}_filtered_indels.vcf.idx") into filtered_indels
+    set val(name), file("${name}_filtered_indels.vcf"), file("${name}_filtered_indels.vcf.idx") into filtered_indels
 
     script:
     """
@@ -525,11 +527,11 @@ process filterIndel {
         --variant $raw_indel \\
         --out ${name}_filtered_indels.vcf \\
         --filterName GATKStandardQD \\
-        --filterExpression "QD < 2.0" \\
+        --filterExpression "QD<2.0" \\
         --filterName GATKStandardReadPosRankSum \\
-        --filterExpression "ReadPosRankSum < -20.0" \\
+        --filterExpression "ReadPosRankSum<-20.0" \\
         --filterName GATKStandardFS \\
-        --filterExpression "FS > 200.0"
+        --filterExpression "FS>200.0"
     """
 }
 
@@ -541,36 +543,36 @@ filtered_snp
 
 // Combine filtered snp and indels for each sample
 process combineVariants {
-    tag "$sample"
+    tag "$name"
 
     input:
     set file(fsnp), file(fsnp_idx), file(findel), file(findel_idx) from variants_filtered
 
     output:
-    set file("${sample}_combined_variants.vcf"), file("${sample}_combined_variants.vcf.idx") into (combined_variants_evaluate,combined_variants)
+    set file("${name}_combined_variants.vcf"), file("${name}_combined_variants.vcf.idx") into (combined_variants_evaluate,combined_variants)
 
     script:
     """
     gatk -T CombineVariants \\
         -R $params.gfasta \\
-        --out ${sample}_combined_variants.vcf \\
+        --out ${name}_combined_variants.vcf \\
         --genotypemergeoption PRIORITIZE \\
-        --variant:${sample}_SNP_filtered $fsnp \\
-        --variant:${sample}_indels_filtered $findel \\
-        --rod_priority_list ${sample}_SNP_filtered,${sample}_indels_filtered
+        --variant:${name}_SNP_filtered $fsnp \\
+        --variant:${name}_indels_filtered $findel \\
+        --rod_priority_list ${name}_SNP_filtered,${name}_indels_filtered
     """
 }
 
 // Evaluate variants
 process variantEvaluate {
-    tag "$sample"
-    publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
+    tag "$name"
+    publishDir "${params.outdir}/${name}/variants", mode: 'copy'
 
     input:
-    set file("${sample}_combined_variants.vcf"), file("${sample}_combined_variants.vcf.idx") from combined_variants_evaluate
+    set file("${name}_combined_variants.vcf"), file("${name}_combined_variants.vcf.idx") from combined_variants_evaluate
 
     output:
-    file "${sample}_combined_phased_variants.eval"
+    file "${name}_combined_phased_variants.eval"
 
     script:
     """
@@ -578,7 +580,7 @@ process variantEvaluate {
         -R $params.gfasta \\
         --eval $phased_vcf \\
         --dbsnp $params.dbsnp \\
-        -o ${sample}_combined_phased_variants.eval \\
+        -o ${name}_combined_phased_variants.eval \\
         -L $params.target \\
         --doNotUseAllStandardModules \\
         --evalModule TiTvVariantEvaluator \\
@@ -592,8 +594,8 @@ process variantEvaluate {
 
 // Annotate variants
 process variantAnnotate {
-    tag "$sample"
-    publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
+    tag "$name"
+    publishDir "${params.outdir}/${name}/variants", mode: 'copy'
 
     input:
     set file(phased_vcf), file(phased_vcf_ind) from combined_variants
@@ -609,14 +611,14 @@ process variantAnnotate {
         -o gatk \\
         -o vcf \\
         -filterInterval $params.target_bed GRCh37.75 $phased_vcf \\
-            > ${sample}_combined_phased_variants.snpeff
+            > ${name}_combined_phased_variants.snpeff
 
     gatk -T VariantAnnotator \\
         -R $params.gfasta \\
         -A SnpEff \\
         --variant $phased_vcf \\
-        --snpEffFile ${sample}_combined_phased_variants.snpeff \\
-        --out ${sample}_combined_phased_annotated_variants.vcf
+        --snpEffFile ${name}_combined_phased_variants.snpeff \\
+        --out ${name}_combined_phased_annotated_variants.vcf
     """
 }
 
