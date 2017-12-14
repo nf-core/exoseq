@@ -516,7 +516,7 @@ process variantSelect {
 }
 
 // Filter SNP
-process filterSnp {
+process recalSNPs {
     tag "${name}"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
 
@@ -554,7 +554,7 @@ process filterSnp {
 }
 
 // Filter indels
-process filterIndel {
+process recalIndels {
     tag "${name}"
     publishDir "${params.outdir}/${name}/variants", mode: 'copy'
 
@@ -566,16 +566,24 @@ process filterIndel {
 
     script:
     """
-    gatk -T VariantFiltration \\
+    gatk -T VariantRecalibrator \\
         -R $params.gfasta \\
-        --variant $raw_indel \\
+        --input $raw_indel \\
+        --maxGaussians 4 \\
+        --recal_file ${name}_indel.recal \\
+        --tranches_file ${name}_indel.tranches \\
+        -resource:mills,known=false,training=true,truth=true,prior=12.0 $params.mills \\
+        -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 $params.dbsnp \\
+        -an QD -an DP -an FS -an SOR -an ReadPosRankSum -an MQRankSum -an InbreedingCoeff \\
+        -mode INDEL \
+
+    gatk -T ApplyRecalibration \\
+        -R $params.gfasta \\
         --out ${name}_filtered_indels.vcf \\
-        --filterName GATKStandardQD \\
-        --filterExpression "QD<2.0" \\
-        --filterName GATKStandardReadPosRankSum \\
-        --filterExpression "ReadPosRankSum<-20.0" \\
-        --filterName GATKStandardFS \\
-        --filterExpression "FS>200.0"
+        --input $raw_indel \\
+        --mode SNP \\
+        --tranches_file ${name}_indel.tranches \\
+        --recal_file ${name}_indel.recal
     """
 }
 
