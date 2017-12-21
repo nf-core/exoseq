@@ -21,13 +21,20 @@ The pipeline is built based on [GATK](https://software.broadinstitute.org/gatk/b
 The QBiC-ExoSeq pipeline comes with documentation about the pipeline, found in the `docs/` directory:
 
 1. [Pipeline installation and configuration instructions](docs/installation.md)
-2. [Running the pipeline](docs/usage.md)
-3. [Documentation of the results](docs/output.md)
-4. [Documentation on each process of the pipeline](docs/processes.md)
-5. [Instuctions on how to install capture kits](docs/kits.md)
+2. Pipeline configuration
+   * [Local installation](docs/configuration/local.md)
+   * [Amazon Web Services](docs/configuration/aws.md)
+   * [Swedish UPPMAX clusters](docs/configuration/uppmax.md)
+   * [Swedish cs3e Hebbe cluster](docs/configuration/c3se.md)
+   * [Tübingen QBIC clusters](docs/configuration/qbic.md)
+   * [Adding your own system](docs/configuration/adding_your_own.md)
+3. [Running the pipeline](docs/usage.md)
+   * [Preparing custom exome capture kits](docs/kits.md)
+4. [Output and how to interpret the results](docs/output.md)
+5. [Troubleshooting](docs/troubleshooting.md)
 
 ### Credits
-The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) and has been adapted to our needs at QBiC, Tübingen, Germany.
+The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) and has been adapted by Alex Peltzer ([@apeltzer](https://github.com/apeltzer) to our needs at QBiC, Tübingen, Germany.
 
 In addition, we would like to recognise:
 * Developers at [SciLifeLab](http://www.scilifelab.se/) in Stockholm, Sweden 
