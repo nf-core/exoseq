@@ -89,9 +89,8 @@ params.target = params.kitFiles[ params.kit ] ? params.kitFiles[ params.kit ].ta
 params.target_bed = params.kitFiles[ params.kit ] ? params.kitFiles[ params.kit ].target_bed ?: false : false
 params.dbsnp = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].dbsnp ?: false : false
 params.thousandg = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].thousandg ?: false : false
-params.clinvar = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].clinvar ?: false : false
-params.exac = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].exac ?: false : false
-params.gnomad = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].gnomad ?: false : false
+params.mills = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].mills ?: false : false
+params.omni = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].omni ?: false : false
 params.gfasta = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].gfasta ?: false : false
 params.bwa_index = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].bwa_index ?: false : false
 
@@ -491,7 +490,6 @@ process variantCall {
         -R $params.gfasta \\
         -o ${name}_variants.vcf \\
         -ERC GVCF \\
-        -nt $task.cpus \\
         -L $params.target \\
         --annotation HaplotypeScore \\
         --annotation MappingQualityRankSumTest \\
@@ -501,7 +499,8 @@ process variantCall {
         --annotation FisherStrand \\
         --annotation Coverage \\
         --standard_min_confidence_threshold_for_calling 30.0 \\
-        --dbsnp $params.dbsnp -l INFO
+        --dbsnp $params.dbsnp -l INFO \\
+        -variant_index_type LINEAR -variant_index_parameter 128000
     """
     } else { //We have a winner (genome)
     """
@@ -510,7 +509,6 @@ process variantCall {
         -R $params.gfasta \\
         -o ${name}_variants.vcf \\
         -ERC GVCF \\
-        -nt $task.cpus \\
         --annotation HaplotypeScore \\
         --annotation MappingQualityRankSumTest \\
         --annotation QualByDepth \\
@@ -519,7 +517,8 @@ process variantCall {
         --annotation FisherStrand \\
         --annotation Coverage \\
         --standard_min_confidence_threshold_for_calling 30.0 \\
-        --dbsnp $params.dbsnp -l INFO
+        --dbsnp $params.dbsnp -l INFO \\
+        -variant_index_type LINEAR -variant_index_parameter 128000
     """    
     }
 }
@@ -538,7 +537,7 @@ process genotypegvcfs{
 
     script:
     """
-    gatk -T GenotypeVCFS \\
+    gatk -T GenotypeGVCFs \\
     -R $params.gfasta \\
     --variant $raw_vcf \\
     -nt $task.cpus \\
@@ -596,7 +595,6 @@ process recalSNPs {
         --maxGaussians 4 \\
         --recal_file ${name}_snp.recal \\
         --tranches_file ${name}_snp.tranches \\
-        -resource:hapmap,known=false,training=true,truth=true,prior=15.0 $params.hapmap \\
         -resource:omni,known=false,training=true,truth=true,prior=12.0 $params.omni \\
         -resource:1000G,known=false,training=true,truth=false,prior=10.0 $params.thousandg \\
         -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 $params.dbsnp \\
@@ -638,7 +636,7 @@ process recalIndels {
         --tranches_file ${name}_indel.tranches \\
         -resource:mills,known=false,training=true,truth=true,prior=12.0 $params.mills \\
         -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 $params.dbsnp \\
-        -an QD -an DP -an FS -an SOR -an ReadPosRankSum -an MQRankSum -an InbreedingCoeff \\
+        -an QD -an DP -an FS -an SOR \\
         -mode INDEL 
 
     gatk -T ApplyRecalibration \\
@@ -667,7 +665,7 @@ process combineVariants {
     set file(fsnp), file(fsnp_idx), file(findel), file(findel_idx) from variants_filtered
 
     output:
-    set file("${name}_combined_variants.vcf"), file("${name}_combined_variants.vcf.idx") into (combined_variants_evaluate,combined_variants)
+    set file("${name}_combined_variants.vcf"), file("${name}_combined_variants.vcf.idx") into (combined_variants_evaluate,combined_variants_snpEff, combined_variants_gatk)
 
     script:
     """
@@ -682,26 +680,40 @@ process combineVariants {
 }
 
 // Annotate variants
-process variantAnnotate {
+process variantAnnotatesnpEff {
     tag "$name"
     publishDir "${params.outdir}/${name}/variants", mode: 'copy'
 
     input:
-    set file(phased_vcf), file(phased_vcf_ind) from combined_variants
+    set file(phased_vcf), file(phased_vcf_ind) from combined_variants_snpEff
 
     output:
-    file "*.{vcf,idx,snpeff}"
+    file "*.{snpeff}" into combined_variants_gatk
 
     script:
     """
-    java -Xmx6g -jar \$SNPEFF_HOME/snpEff.jar \\
-        -c \$SNPEFF_HOME/snpEff.config \\
+        snpEff \\
+        -c /usr/local/lib/snpEff/snpEff.config \\
         -i vcf \\
         -o gatk \\
         -o vcf \\
         -filterInterval $params.target_bed GRCh37.75 $phased_vcf \\
             > ${name}_combined_phased_variants.snpeff
+    """
+}
 
+process variantAnnotateGATK{     
+    tag "$name"
+    publishDir "${params.outdir}/${name}/variants", mode: 'copy'
+
+    input:
+    set file(phased_vcf), file(phased_vcf_ind), file(phased_vcf_snpeff) from combined_variants_gatk
+
+    output:
+    file "*.{vcd,idx}"
+
+    script:
+    """
     gatk -T VariantAnnotator \\
         -R $params.gfasta \\
         -A SnpEff \\
