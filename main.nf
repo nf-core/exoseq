@@ -23,7 +23,7 @@ Developed based on GATK's best practise, takes set of FASTQ files and performs:
 */
 
 // Package version
-version = '1.0'
+version = '0.8'
 
 // Help message
 helpMessage = """
