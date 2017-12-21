@@ -688,7 +688,7 @@ process variantAnnotatesnpEff {
     set file(phased_vcf), file(phased_vcf_ind) from combined_variants_snpEff
 
     output:
-    file "*.{snpeff}" into combined_variants_gatk
+    file "*.{snpeff}" into combined_variants_gatk_snpeff
 
     script:
     """
@@ -707,7 +707,8 @@ process variantAnnotateGATK{
     publishDir "${params.outdir}/${name}/variants", mode: 'copy'
 
     input:
-    set file(phased_vcf), file(phased_vcf_ind), file(phased_vcf_snpeff) from combined_variants_gatk
+    set file(phased_vcf), file(phased_vcf_ind) from combined_variants_gatk
+    file(phased_vcf_snpeff) from combined_variants_gatk_snpeff
 
     output:
     file "*.{vcd,idx}"
