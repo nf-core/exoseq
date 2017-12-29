@@ -315,7 +315,7 @@ process bwamem {
 process sortSam {
     tag "${name}"
     publishDir "${params.outdir}/BWAmem", mode: 'copy',
-        saveAs: {filename -> params.saveAlignedIntermediates ? "aligned_sorted"/$filename : null }
+        saveAs: {filename -> params.saveAlignedIntermediates ? "$filename" : null }
     
     input:
     set val(name), file(raw_sam) from raw_aln_sam
