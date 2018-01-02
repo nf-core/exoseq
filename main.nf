@@ -705,6 +705,7 @@ process variantAnnotatesnpEff {
 
     output:
     file "*.{snpeff}" into combined_variants_gatk_snpeff
+    file '.command.log' into snpeff_stdout
 
     script:
     """
@@ -714,7 +715,10 @@ process variantAnnotatesnpEff {
         -o gatk \\
         -o vcf \\
         -filterInterval $params.target_bed GRCh37.75 $phased_vcf \\
-            > ${name}_combined_phased_variants.snpeff
+            > ${name}_combined_phased_variants.snpeff 
+        
+        # Print version number to standard out
+        echo "GATK version "\$(snpEff -version 2>&1)
     """
 }
 
@@ -775,7 +779,7 @@ process variantEvaluate {
  */
 software_versions = [
   'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'Picard MarkDuplicates': null, 'GATK': null,
-  'Nextflow': "v$workflow.nextflow.version"
+  'SNPEff': null, 'QualiMap': null, 'Nextflow': "v$workflow.nextflow.version"
 ]
 
 process get_software_versions {
@@ -795,13 +799,14 @@ process get_software_versions {
     file 'software_versions_mqc.yaml' into software_versions_yaml
 
     exec:
-    software_versions['FastQC'] = fastqc[0].getText().find(/FastQC v(\S+)/) { match, version -> "v$version" }
+    software_versions['FastQC'] = fastqc[0].getText().find(/FastQC v(\S+)/) { match, version -> "v$version"}
     software_versions['Trim Galore!'] = trim_galore[0].getText().find(/Trim Galore version: (\S+)/) {match, version -> "v$version"}
     software_versions['BWA'] = bwa[0].getText().find(/Version: (\S+)/) {match, version -> "v$version"}
     software_versions['Picard MarkDuplicates'] = markDuplicates[0].getText().find(/Picard version ([\d\.]+)/) {match, version -> "v$version"}
     software_versions['GATK'] = gatk[0].getText().find(/GATK version ([\d\.]+)/) {match, version -> "v$version"} 
     software_versions['QualiMap'] = qualimap[0].getText().find(/QualiMap v.(\S+)/) {match, version -> "v$version"}
-)
+    software_versions['SNPEff'] = snpeff[0].getText().find(/SnpEff (\S+)/) {match, version -> "v$version" }
+
     def sw_yaml_file = task.workDir.resolve('software_versions_mqc.yaml')
     sw_yaml_file.text  = """
     id: 'ngi-exoseq'
