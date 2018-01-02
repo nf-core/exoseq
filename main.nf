@@ -378,7 +378,7 @@ process markDuplicates {
         CREATE_MD5_FILE=false \\
         GA4GH_CLIENT_SECRETS=''
 
-         # Print version number to standard out
+    # Print version number to standard out
     echo "File name: $bam_markduplicates Picard version "\$(picard  MarkDuplicates --version 2>&1)
     """
 }
@@ -392,6 +392,7 @@ process recal_bam_files {
 
     output:
     set val(name), file("${name}_recal.bam"), file("${name}_recal.bai") into samples_recal_bam
+    file '.command.log' into gatk_stdout
 
     script:
     """
@@ -418,6 +419,9 @@ process recal_bam_files {
         -U \\
         -OQ \\
         -l INFO
+
+    # Print version number to standard out
+    echo "GATK version "\$(gatk --version 2>&1)
     """
 }
 
@@ -462,6 +466,7 @@ process qualiMap {
 
     output:
     file "${name}_qualimap" into qualimap_results
+    file '.command.log' into qualimap_stdout
 
     script:
     gcref = ''
@@ -475,6 +480,9 @@ process qualiMap {
     --collect-overlap-pairs \\
     -nt ${task.cpus} \\
     --java-mem-size=${task.memory.toGiga()}G \\
+
+    # Print version number to standard out
+    echo "QualiMap version "\$(qualimap --version 2>&1)
     """
 }
 
@@ -779,6 +787,8 @@ process get_software_versions {
     val trim_galore from trimgalore_logs.collect()
     val bwa from bwa_stdout.collect()
     val markDuplicates from markDuplicates_stdout.collect()
+    val gatk from gatk_stdout.collect()
+    val qualimap from qualimap_stdout.collect()
 
     output:
     file 'software_versions_mqc.yaml' into software_versions_yaml
@@ -788,13 +798,8 @@ process get_software_versions {
     software_versions['Trim Galore!'] = trim_galore[0].getText().find(/Trim Galore version: (\S+)/) {match, version -> "v$version"}
     software_versions['BWA'] = bwa[0].getText().find(/Version: (\S+)/) {match, version -> "v$version"}
     software_versions['Picard MarkDuplicates'] = markDuplicates[0].getText().find(/Picard version ([\d\.]+)/) {match, version -> "v$version"}
-
+    software_versions['GATK'] = gatk[0].getText().find(/GATK version ([\d\.]+)/) {match, version -> "v$version"} 
     
-    software_versions['StringTie'] = stringtie[0].getText().find(/StringTie (\S+)/) { match, version -> "v"+version.replaceAll(/\.$/, "") }
-    software_versions['Preseq'] = preseq[0].getText().find(/Version: (\S+)/) { match, version -> "v$version" }
-    software_versions['featureCounts'] = featurecounts[0].getText().find(/\s+v([\.\d]+)/) {match, version -> "v$version"}
-    software_versions['dupRadar'] = dupradar[0].getText().find(/dupRadar\_(\S+)/) {match, version -> "v$version"}
-
     def sw_yaml_file = task.workDir.resolve('software_versions_mqc.yaml')
     sw_yaml_file.text  = """
     id: 'ngi-exoseq'
