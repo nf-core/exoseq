@@ -248,7 +248,7 @@ if(params.notrim){
 
         output:
         set val(name), file('*fq.gz') into trimmed_reads
-        file '*trimming_report.txt' into trimgalore_results
+        file '*trimming_report.txt' into trimgalore_results, trimgalore_logs
 
         script:
         single = reads instanceof Path
@@ -282,6 +282,8 @@ process bwamem {
 
     output:
     set val(name), file("${name}_bwa.sam") into raw_aln_sam
+    file '.command.log' into bwa_stdout
+
 
     script:
     rg="\'@RG\\tID:${params.run_id}\\tSM:${params.run_id}\\tPL:illumina\'"
@@ -305,6 +307,8 @@ process bwamem {
         $reads\\
             > ${name}_bwa.sam
     """
+        # Print version number to standard out
+    echo "BWA Version:"\$(bwa 2>&1)
 }
 }
 
@@ -349,6 +353,7 @@ process markDuplicates {
     output:
     set val(name), file("${name}_markdup.bam") into samples_markdup_bam
     file("${name}.dup_metrics") into markdup_results
+    file '.command.log' into markDuplicates_stdout
 
     script:
     """
@@ -372,6 +377,9 @@ process markDuplicates {
         MAX_RECORDS_IN_RAM=500000 \\
         CREATE_MD5_FILE=false \\
         GA4GH_CLIENT_SECRETS=''
+
+         # Print version number to standard out
+    echo "File name: $bam_markduplicates Picard version "\$(picard  MarkDuplicates --version 2>&1)
     """
 }
 
@@ -758,12 +766,9 @@ process variantEvaluate {
  * Parse software version numbers
  */
 software_versions = [
-  'FastQC': null, 'Trim Galore!': null, 'Star': null, 'HISAT2': null, 'StringTie': null,
-  'Preseq': null, 'featureCounts': null, 'dupRadar': null, 'Picard MarkDuplicates': null,
+  'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'Picard MarkDuplicates': null, 'GATK': null,
   'Nextflow': "v$workflow.nextflow.version"
 ]
-if(params.aligner == 'star') software_versions.remove('HISAT2')
-else if(params.aligner == 'hisat2') software_versions.remove('Star')
 
 process get_software_versions {
     cache false
@@ -772,12 +777,7 @@ process get_software_versions {
     input:
     val fastqc from fastqc_stdout.collect()
     val trim_galore from trimgalore_logs.collect()
-    val star from star_log.collect()
-    val stringtie from stringtie_stdout.collect()
-    val hisat from hisat_stdout.collect()
-    val preseq from preseq_stdout.collect()
-    val featurecounts from featurecounts_stdout.collect()
-    val dupradar from dupradar_stdout.collect()
+    val bwa from bwa_stdout.collect()
     val markDuplicates from markDuplicates_stdout.collect()
 
     output:
@@ -786,8 +786,8 @@ process get_software_versions {
     exec:
     software_versions['FastQC'] = fastqc[0].getText().find(/FastQC v(\S+)/) { match, version -> "v$version" }
     software_versions['Trim Galore!'] = trim_galore[0].getText().find(/Trim Galore version: (\S+)/) {match, version -> "v$version"}
-    if(params.aligner == 'star') software_versions['Star'] = star[0].getText().find(/STAR_(\d+\.\d+\.\d+)/) { match, version -> "v$version" }
-    else if(params.aligner == 'hisat2') software_versions['HISAT2'] = hisat[0].getText().find(/hisat2\S+ version (\S+)/) { match, version -> "v$version" }
+    
+    
     software_versions['StringTie'] = stringtie[0].getText().find(/StringTie (\S+)/) { match, version -> "v"+version.replaceAll(/\.$/, "") }
     software_versions['Preseq'] = preseq[0].getText().find(/Version: (\S+)/) { match, version -> "v$version" }
     software_versions['featureCounts'] = featurecounts[0].getText().find(/\s+v([\.\d]+)/) {match, version -> "v$version"}
@@ -796,9 +796,9 @@ process get_software_versions {
 
     def sw_yaml_file = task.workDir.resolve('software_versions_mqc.yaml')
     sw_yaml_file.text  = """
-    id: 'ngi-rnaseq'
-    section_name: 'NGI-RNAseq Software Versions'
-    section_href: 'https://github.com/SciLifeLab/NGI-RNAseq'
+    id: 'ngi-exoseq'
+    section_name: 'NGI-ExoSeq Software Versions'
+    section_href: 'https://github.com/SciLifeLab/NGI-ExoSeq'
     plot_type: 'html'
     description: 'are collected at run time from the software output.'
     data: |
