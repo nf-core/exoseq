@@ -397,7 +397,11 @@ process markDuplicates {
     """
 }
 
-// Recalibrate the bam file with known variants
+
+/*
+ * Step 5 - Recalibrate BAM file with known variants and BaseRecalibrator
+ * 
+*/ 
 process recal_bam_files {
     tag "${name}"
 
@@ -440,8 +444,10 @@ process recal_bam_files {
 }
 
 
-// Realign the bam files based on known variants
-process realign {
+/*
+ * Step 6 - Realign BAM file around indels
+ * 
+*/ process realign {
     tag "${name}"
     publishDir "${params.outdir}/${name}/alignment", mode: 'copy',
         saveAs: {filename -> filename.replaceFirst(/realign/, "sorted_dupmarked_recalibrated_realigned")}
@@ -470,7 +476,10 @@ process realign {
     """
 }
 
-//Use QualiMap2, which is much nicer.
+/*
+ * Step 7 - Determine quality metrics of mapped BAM files using QualiMap 2
+ * 
+*/ 
 process qualiMap {
     tag "${name}"
     publishDir "${params.outdir}/${name}/qualimap", mode: 'copy'
@@ -500,7 +509,10 @@ process qualiMap {
     """
 }
 
-// Call variants
+/*
+ * Step 8 - Call Variants with HaplotypeCaller in GVCF mode (differentiate between exome and whole genome data here)
+ * 
+*/ 
 process variantCall {
     tag "${name}"
     publishDir "${params.outdir}/${name}/variants", mode: 'copy',
@@ -554,7 +566,10 @@ process variantCall {
 }
 
 
-//Combine Genotypes following Best Practices guidelines
+/*
+ * Step 9 - Genotype generate GVCFs using GATK's GenotypeGVCFs
+ * 
+*/ 
 
 process genotypegvcfs{
     tag "${name}"
@@ -575,7 +590,11 @@ process genotypegvcfs{
     """
 }
 
-// Select variants
+/*
+ * Step 10 - Create separate files for SNPs and Indels 
+ * 
+*/ 
+
 process variantSelect {
     tag "${name}"
 
@@ -606,7 +625,12 @@ process variantSelect {
     """
 }
 
-// Filter SNP
+
+/*
+ * Step 11 - Recalibrate SNPs using Omni, 1000G and DBSNP databases 
+ * 
+*/ 
+
 process recalSNPs {
     tag "${name}"
     publishDir "${params.outdir}/${sample}/variants", mode: 'copy'
@@ -645,7 +669,12 @@ process recalSNPs {
     """
 }
 
-// Filter indels
+
+/*
+ * Step 12 - Recalibrate INDELS using the Mills golden dataset 
+ * 
+*/ 
+
 process recalIndels {
     tag "${name}"
     publishDir "${params.outdir}/${name}/variants", mode: 'copy'
@@ -681,13 +710,21 @@ process recalIndels {
     """
 }
 
-// Group SNPs and Indel again
+/*
+ * Step 13 - Combine recalibrated files again
+ * 
+*/ 
+
 filtered_snp
     .cross(filtered_indels)
     .map{ it -> [it[0][0], it[0][1], it[0][2], it[1][1], it[1][2]] }
     .set{ variants_filtered }
 
-// Combine SNP + Indel Files into a single VCF again
+/*
+ * Step 14 - Combine recalibrated files again using GATK's CombineVariants
+ * 
+*/
+
 process combineVariants {
     tag "$name"
 
@@ -709,7 +746,10 @@ process combineVariants {
     """
 }
 
-// Annotate variants
+/*
+ * Step 15 - Annotate Variants with SNPEff
+ * 
+*/
 process variantAnnotatesnpEff {
     tag "$name"
     publishDir "${params.outdir}/${name}/variants", mode: 'copy'
@@ -738,6 +778,12 @@ process variantAnnotatesnpEff {
     """
 }
 
+
+/*
+ * Step 16 - Annotate Variants with GATK
+ * 
+*/
+
 process variantAnnotateGATK{     
     tag "$name"
     publishDir "${params.outdir}/${name}/variants", mode: 'copy'
@@ -761,7 +807,11 @@ process variantAnnotateGATK{
 }
 
 
-// Evaluate variants
+
+/*
+ * Step 17 - Perform variant evaluation with GATK's VariantEval tool
+*/
+
 process variantEvaluate {
     tag "$name"
     publishDir "${params.outdir}/${name}/variants", mode: 'copy'
@@ -791,18 +841,19 @@ process variantEvaluate {
     """
 }
 
+
 /*
- * Parse software version numbers
- */
+ * Step 18 - Generate Software Versions Map
+ * 
+*/
 software_versions = [
   'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'Picard MarkDuplicates': null, 'GATK': null,
   'SNPEff': null, 'QualiMap': null, 'Nextflow': "v$workflow.nextflow.version"
 ]
 
 /*
-* Generates a YAML file for software versions in the pipeline
+* Step 19 - Generate a YAML file for software versions in the pipeline
 * This is then parsed by MultiQC and the report feature to produce a final report with the software Versions in the pipeline.
-*
 */ 
 
 process get_software_versions {
@@ -846,9 +897,8 @@ ${software_versions.collect{ k,v -> "            <dt>$k</dt><dd>${v ?: '<span st
 
 
 /*
-* Collects results from individual tools and produces a single output report for all the tools in the pipeline.
-* 
-*/
+* Step 20 - Collect metrics, stats and other resources with MultiQC in a single call
+*/ 
 
 process multiqc {
     tag "$name"
