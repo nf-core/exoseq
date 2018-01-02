@@ -789,6 +789,7 @@ process get_software_versions {
     val markDuplicates from markDuplicates_stdout.collect()
     val gatk from gatk_stdout.collect()
     val qualimap from qualimap_stdout.collect()
+    val snpeff from snpeff_stdout.collect()
 
     output:
     file 'software_versions_mqc.yaml' into software_versions_yaml
@@ -799,7 +800,8 @@ process get_software_versions {
     software_versions['BWA'] = bwa[0].getText().find(/Version: (\S+)/) {match, version -> "v$version"}
     software_versions['Picard MarkDuplicates'] = markDuplicates[0].getText().find(/Picard version ([\d\.]+)/) {match, version -> "v$version"}
     software_versions['GATK'] = gatk[0].getText().find(/GATK version ([\d\.]+)/) {match, version -> "v$version"} 
-    
+    software_versions['QualiMap'] = qualimap[0].getText().find(/QualiMap v.(\S+)/) {match, version -> "v$version"}
+)
     def sw_yaml_file = task.workDir.resolve('software_versions_mqc.yaml')
     sw_yaml_file.text  = """
     id: 'ngi-exoseq'
