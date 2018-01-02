@@ -786,13 +786,14 @@ process get_software_versions {
     exec:
     software_versions['FastQC'] = fastqc[0].getText().find(/FastQC v(\S+)/) { match, version -> "v$version" }
     software_versions['Trim Galore!'] = trim_galore[0].getText().find(/Trim Galore version: (\S+)/) {match, version -> "v$version"}
-    
+    software_versions['BWA'] = bwa[0].getText().find(/Version: (\S+)/) {match, version -> "v$version"}
+    software_versions['Picard MarkDuplicates'] = markDuplicates[0].getText().find(/Picard version ([\d\.]+)/) {match, version -> "v$version"}
+
     
     software_versions['StringTie'] = stringtie[0].getText().find(/StringTie (\S+)/) { match, version -> "v"+version.replaceAll(/\.$/, "") }
     software_versions['Preseq'] = preseq[0].getText().find(/Version: (\S+)/) { match, version -> "v$version" }
     software_versions['featureCounts'] = featurecounts[0].getText().find(/\s+v([\.\d]+)/) {match, version -> "v$version"}
     software_versions['dupRadar'] = dupradar[0].getText().find(/dupRadar\_(\S+)/) {match, version -> "v$version"}
-    software_versions['Picard MarkDuplicates'] = markDuplicates[0].getText().find(/Picard version ([\d\.]+)/) {match, version -> "v$version"}
 
     def sw_yaml_file = task.workDir.resolve('software_versions_mqc.yaml')
     sw_yaml_file.text  = """
