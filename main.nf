@@ -13,6 +13,7 @@ vim: syntax=groovy
  Senthilkumar Panneerselvam @senthil10 <senthilkumar.panneerselvam@scilifelab.se>
  Phil Ewels @ewels <phil.ewels@scilifelab.se>
  Alex Peltzer @alex_peltzer <alexander.peltzer@qbic.uni-tuebingen.de>
+ Marie Gauder <marie.gauder@student.uni-tuebingen.de>
 ----------------------------------------------------------------------------------------
 Developed based on GATK's best practise, takes set of FASTQ files and performs:
  - alignment (BWA)
