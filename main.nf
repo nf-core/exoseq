@@ -706,12 +706,14 @@ process variantAnnotatesnpEff {
     output:
     file "*.{snpeff}" into combined_variants_gatk_snpeff
     file '.command.log' into snpeff_stdout
+    file 'SnpEffStats.csv' into snpeff_results
 
     script:
     """
         snpEff \\
         -c /usr/local/lib/snpEff/snpEff.config \\
         -i vcf \\
+        -csvStats SnpEffStats.csv \\
         -o gatk \\
         -o vcf \\
         -filterInterval $params.target_bed GRCh37.75 $phased_vcf \\
@@ -755,6 +757,7 @@ process variantEvaluate {
 
     output:
     file "${name}_combined_phased_variants.eval"
+    file "${name}_combined_phased_variants.eval" into gatk_variant_eval_results
 
     script:
     """
@@ -830,7 +833,10 @@ process multiqc {
     file (fastqc:'fastqc/*') from fastqc_results.collect()
     file ('trimgalore/*') from trimgalore_results.collect()
     file ('picard/*') from markdup_results.collect()
+    file ('snpEff/*') from snpeff_results.collect()
+    file ('gatk_variant_eval/*') from gatk_variant_eval_results.collect()
     file ('software_versions/*') from software_versions_yaml.collect()
+
 
     output:
     file '*multiqc_report.html' into multiqc_report
