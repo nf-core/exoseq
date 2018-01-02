@@ -158,6 +158,15 @@ if(params.aligner == 'bwa' ){
 }
 
 /**
+* Input channels if required
+* 
+*/ 
+
+multiqc_config = file(params.multiqc_config)
+
+
+
+/**
 * Build index for BWA if non exists
 * 
 */
