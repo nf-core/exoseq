@@ -8,7 +8,7 @@ vim: syntax=groovy
 ========================================================================================
  This is based on previous work at NGI, see webpage for details
  #### Homepage / Documentation
- https://github.com/apeltzer/QBIC-ExoSeq
+ https://github.com/scilifelab/NGI-ExoSeq
  #### Authors
  Senthilkumar Panneerselvam @senthil10 <senthilkumar.panneerselvam@scilifelab.se>
  Phil Ewels @ewels <phil.ewels@scilifelab.se>
@@ -31,10 +31,10 @@ helpMessage = """
 QBIC-ExoSeq : Exome/Targeted sequence capture best practice analysis v${version}
 ===============================================================================
 
-Usage: nextflow apeltzer/QBIC-ExoSeq --reads 'P1234*_R{1,2}.fastq.gz' --genome GRCh37
+Usage: nextflow scilifelab/NGI-ExoSeq --reads '*_R{1,2}.fastq.gz' --genome GRCh37
 
 This is a typical usage where the required parameters (with no defaults) were
-given. The all avialable paramaters are listed below based on category
+given. The available paramaters are listed below based on category
 
 Required parameters:
 --reads                        Absolute path to project directory
@@ -52,9 +52,8 @@ Kit files:
 Genome/Variation files:
 --dbsnp                        Absolute path to dbsnp file
 --thousandg                    Absolute path to 1000G file
---clinvar                      Absolute path to ClinVar file
---exac                         Absolute path to ExAC file
---gnomad                       Absolute path to GnomAD
+--mills                        Absolute path to Mills file
+--omni                         Absolute path to Omni file
 --gfasta                       Absolute path to genome fasta file
 --bwa_index                    Absolute path to bwa genome index
 
@@ -62,7 +61,7 @@ Other options:
 --project                      Uppnex project to user for SLURM executor
 
 For more detailed information regarding the parameters and usage refer to package
-documentation at https:// github.com/apeltzer/QBIC-ExoSeq
+documentation at https:// github.com/scilifelab/NGI-ExoSeq
 """
 
 // Variables and defaults
@@ -71,7 +70,7 @@ params.reads = false
 params.singleEnd = false
 params.genome = false
 params.run_id = false
-params.exome = true
+params.exome = true //also default, integrate whole genome later
 params.aligner = 'bwa' //Default, but stay tuned for later ;-) 
 params.saveReference = true
 
