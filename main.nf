@@ -296,6 +296,9 @@ process bwamem {
         $params.gfasta \\
         $reads \\
             > ${name}_bwa.sam
+            
+    # Print version number to standard out
+    echo "BWA Version:"\$(bwa 2>&1)
     """
     } else {
     """
@@ -306,9 +309,11 @@ process bwamem {
         $params.gfasta \\
         $reads\\
             > ${name}_bwa.sam
-    """
-        # Print version number to standard out
+
+    # Print version number to standard out
     echo "BWA Version:"\$(bwa 2>&1)
+    """
+
 }
 }
 
