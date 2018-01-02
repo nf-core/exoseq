@@ -93,6 +93,7 @@ params.mills = params.metaFiles[ params.genome ] ? params.metaFiles[ params.geno
 params.omni = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].omni ?: false : false
 params.gfasta = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].gfasta ?: false : false
 params.bwa_index = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].bwa_index ?: false : false
+params.multiqc_config = "$baseDir/conf/multiqc_config.yaml"
 
 
 //Output configuration
@@ -296,7 +297,7 @@ process bwamem {
         $params.gfasta \\
         $reads \\
             > ${name}_bwa.sam
-            
+
     # Print version number to standard out
     echo "BWA Version:"\$(bwa 2>&1)
     """
