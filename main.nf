@@ -394,7 +394,7 @@ process markDuplicates {
         GA4GH_CLIENT_SECRETS=''
 
     # Print version number to standard out
-    echo "File name: $bam_markduplicates Picard version "\$(picard  MarkDuplicates --version 2>&1)
+    echo "Picard version "\$(picard  MarkDuplicates --version 2>&1)
     """
 }
 
