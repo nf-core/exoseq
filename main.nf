@@ -785,6 +785,12 @@ software_versions = [
   'SNPEff': null, 'QualiMap': null, 'Nextflow': "v$workflow.nextflow.version"
 ]
 
+/*
+* Generates a YAML file for software versions in the pipeline
+* This is then parsed by MultiQC and the report feature to produce a final report with the software Versions in the pipeline.
+*
+*/ 
+
 process get_software_versions {
     cache false
     executor 'local'
@@ -823,6 +829,12 @@ ${software_versions.collect{ k,v -> "            <dt>$k</dt><dd>${v ?: '<span st
         </dl>
     """.stripIndent()
 }
+
+
+/*
+* Collects results from individual tools and produces a single output report for all the tools in the pipeline.
+* 
+*/
 
 process multiqc {
     tag "$name"
