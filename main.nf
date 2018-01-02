@@ -29,7 +29,7 @@ version = '0.8'
 // Help message
 helpMessage = """
 ===============================================================================
-QBIC-ExoSeq : Exome/Targeted sequence capture best practice analysis v${version}
+NGI-ExoSeq : Exome/Targeted sequence capture best practice analysis v${version}
 ===============================================================================
 
 Usage: nextflow scilifelab/NGI-ExoSeq --reads '*_R{1,2}.fastq.gz' --genome GRCh37
