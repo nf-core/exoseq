@@ -154,10 +154,9 @@ Instructs Trim Galore to remove bp from the 3' end of read 1 _AFTER_ adapter/qua
 Instructs Trim Galore to re move bp from the 3' end of read 2 _AFTER_ adapter/quality trimming has been performed.
 
 
-## Kits
+## Capture Kits
 
-
-
+<!-- To do -->
 
 ## Job Resources
 ### Automatic resubmission
