@@ -1,116 +1,51 @@
-/*
-Uppmax config file for NGI-EXOseq pipeline
-Contains paths for meta files, genomes and
-configurations for executors i.e. SLURM
-*/
+# NGI-Exoseq: UPPMAX Configuration
 
-process {
-    executor = 'slurm'
-    cpus = {2 * task.attempt}
-    memory = { 16.GB * task.attempt }
-    time = { 2.h * task.attempt }
-    clusterOptions = { "-A $params.project ${params.clusterOptions ?: ''}" }
-    errorStrategy = { task.exitStatus == 143 ? 'retry' : 'finish' }
-    maxRetries = 3
-    maxErrors = '-1'
-    $bwaAlign {
-        module = ['bioinfo-tools', 'bwa/0.7.15']
-        cpus = { 8 * task.attempt }
-        memory = { 64.GB * task.attempt }
-        time = { 10.h * task.attempt }
-    }
-    $fastqToSam {
-        module = ['bioinfo-tools', 'picard/2.0.1']
-        cpus = { 4 * task.attempt }
-    }
-    $mergeLaneBam {
-        module = ['bioinfo-tools', 'picard/2.0.1']
-        cpus = { 8 * task.attempt }
-        memory = { 40.GB * task.attempt }
-        time = { 10.h * task.attempt }
-    }
-    $sortLanesBam {
-        module = ['bioinfo-tools', 'picard/2.0.1']
-    }
-    $mergeSampleBam {
-        module = ['bioinfo-tools', 'picard/2.0.1']
-        cpus = { 8 * task.attempt }
-        memory = { 40.GB * task.attempt }
-        time = { 10.h * task.attempt }
-    }
-    $markDuplicate {
-        module = ['bioinfo-tools', 'picard/2.0.1']
-        cpus = { 8 * task.attempt }
-        memory = { 32.GB * task.attempt }
-        time = { 5.h * task.attempt }
-    }
-    $recalibrate {
-        module = ['bioinfo-tools', 'GATK/3.7']
-        cpus = { 8 * task.attempt }
-        memory = { 32.GB * task.attempt }
-        time = { 5.h * task.attempt }
-    }
-    $realign {
-        module = ['bioinfo-tools', 'GATK/3.7']
-        cpus = { 8 * task.attempt }
-        memory = { 32.GB * task.attempt }
-        time = { 5.h * task.attempt }
-    }
-    $calculateMetrics {
-        module = ['bioinfo-tools', 'picard/2.0.1']
-    }
-    $variantCall {
-        module = ['bioinfo-tools', 'GATK/3.7']
-        cpus = { 8 * task.attempt }
-        memory = { 32.GB * task.attempt }
-        time = { 8.h * task.attempt }
-    }
-    $variantSelect {
-        module = ['bioinfo-tools', 'GATK/3.7']
-        cpus = { 4 * task.attempt }
-        time = { 3.h * task.attempt }
-    }
-    $filterSnp {
-        module = ['bioinfo-tools', 'GATK/3.7']
-    }
-    $filterIndel {
-        module = ['bioinfo-tools', 'GATK/3.7']
-    }
-    $combineVariants {
-        module = ['bioinfo-tools', 'GATK/3.7']
-        cpus = { 4 * task.attempt }
-    }
-    $haplotypePhasing {
-        module = ['bioinfo-tools', 'GATK/3.7']
-        cpus = { 4 * task.attempt }
-        time = { 3.h * task.attempt }
-    }
-    $variantEvaluate {
-        module = ['bioinfo-tools', 'GATK/3.7']
-        cpus = { 4 * task.attempt }
-    }
-    $variantAnnotate {
-        module = ['bioinfo-tools', 'GATK/3.7', 'snpEff/4.2']
-        cpus = { 4 * task.attempt }
-        time = { 3.h * task.attempt }
-    }
-}
+The pipeline comes bundled with configurations to use the [Swedish UPPMAX](https://www.uppmax.uu.se/) clusters (tested on `milou`, `rackham`, `bianca` and `irma`). As such, you shouldn't need to add any custom configuration - everything _should_ work out of the box.
 
-params {
-    metaFiles {
-        'GRCh37' {
-            gfasta = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/genome_seq_hg19/hg19.fa'
-            bwa_index = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/bwa_genome_hg19/hg19.ga'
-            dbsnp = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/training_sets/dbsnp_132.vcf'
-            hapmap = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/training_sets/hapmap_3.3.vcf'
-            omni = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/training_sets/1000G_omni2.5.vcf'
-        }
-    }
-    kitFiles {
-        'agilent_v5' {
-            bait = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/agilent_files/SureSelect_Human_All_Exon_V5_baits.interval_list'
-            target = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/agilent_files/SureSelect_Human_All_Exon_V5_targets.interval_list'
-            target_bed = '/proj/ngi2016003/nobackup/senthil/seqcap_test/resource/agilent_files/SureSelect_Human_All_Exon_V5_targets_snpeff.bed'
-        }
-    }
-}
+To use the pipeline on UPPMAX, you **must** specificy `-profile uppmax` when running the pipeline (as of Nov 2017).
+
+Note that you will need to specify your UPPMAX project ID when running a pipeline. To do this, use the command line flag `--project <project_ID>`. The pipeline will exit with an error message if you try to run it pipeline with the UPPMAX config profile without a project.
+
+**Optional Extra:** To avoid having to specify your project every time you run Nextflow, you can add it to your personal Nextflow config file instead. Add this line to `~/.nextflow/config`:
+
+```groovy
+params.project = 'project_ID' // eg. b2017123
+```
+
+## Running offline
+If you are running the pipeline on Bianca or Irma, you will not have an active internet connection and some automated features will not be able to function. Specifically, you'll need to transfer the pipeline files and the singularity images manually.
+
+First, to generate the singularity images, run the following command. Note that you need singularity installed - this is available on the other UPPMAX clusters (Milou and Rackham):
+
+```bash
+singularity pull -name qbicsoftware-qbic-singularity-gatk.img qbicsoftware/qbic-singularity-gatk
+singularity pull -name qbicsoftware-qbic-singularity-snpeff.img qbicsoftware/qbic-singularity-snpeff
+singularity pull -name qbicsoftware-qbic-singularity-qualimap2.img qbicsoftware/qbic-singularity-qualimap2
+singularity pull -name qbicsoftware-qbic-singularity-picard.img qbicsoftware/qbic-singularity-picard
+singularity pull -name qbicsoftware-qbic-singularity-samtools.img qbicsoftware/qbic-singularity-samtools
+singularity pull -name qbicsoftware-qbic-singularity-bwa.img qbicsoftware/qbic-singularity-bwa
+singularity pull -name qbicsoftware-qbic-singularity-fastqc.img qbicsoftware/qbic-singularity-fastqc
+singularity pull -name qbicsoftware-qbic-singularity-trimgalore.img qbicsoftware/qbic-singularity-trimgalore
+```
+
+The NGI-Exoseq pipeline files can be downloaded from https://github.com/SciLifeLab/NGI-Exoseq/releases
+
+Once transferred, you may create a `work` directory for nextflow and copy the singularity containers in there:
+
+```bash
+mkdir -p work/singularity/
+mv qbicsoftware-qbic-singularity*.img work/singularity/
+```
+
+```bash
+nextflow run /path/to/NGI-Exoseq -c /path/to/NGI-Exoseq/conf/base.config
+```
+
+(Note that you'll need the other common flags such as `--reads` and `--genome` in addition to this).
+
+---
+
+[![SciLifeLab](images/SciLifeLab_logo.png)](http://www.scilifelab.se/)
+[![National Genomics Infrastructure](images/NGI_logo.png)](https://ngisweden.scilifelab.se/)
+
+---

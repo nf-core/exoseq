@@ -1,6 +1,6 @@
 # ![NGI-ExoSeq](https://raw.githubusercontent.com/SciLifeLab/NGI-ExoSeq/master/docs/images/NGI-ExoSeq_logo.png)
 
-### Introduction
+## Introduction
 
 NGI-ExoSeq is a bioinformatics package that performs best-practice analysis pipeline for Exome Sequencing data at the [National Genomics Infastructure](https://ngisweden.scilifelab.se/)
 at [SciLifeLab Stockholm](https://www.scilifelab.se/platforms/ngi/), Sweden.
@@ -16,7 +16,7 @@ The pipeline is built based on [GATK](https://software.broadinstitute.org/gatk/b
 * Variant Evaluation
 * Variant Annotation
 
-### Documentation
+## Documentation
 The NGI-ExoSeq pipeline comes with documentation about the pipeline, found in the `docs/` directory:
 
 1. [Pipeline installation and configuration instructions](docs/installation.md)
@@ -32,7 +32,7 @@ The NGI-ExoSeq pipeline comes with documentation about the pipeline, found in th
 4. [Output and how to interpret the results](docs/output.md)
 5. [Troubleshooting](docs/troubleshooting.md)
 
-### Credits
+## Credits
 The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) and has been adapted by Alex Peltzer ([@apeltzer](https://github.com/apeltzer)) and Marie Gauder ([@mgauder](https://github.com/mgauder)) to our needs at QBiC, Tübingen, Germany.
 
 In addition, we would like to recognise:
@@ -46,7 +46,7 @@ In addition, we would like to recognise:
 * [SnpEff](http://snpeff.sourceforge.net/) team
 
 
-### Participating Institutes
+## Participating Institutions
 NGI-ExoSeq is now used by a number of core sequencing and bioinformatics facilities. Some of these are listed below. If you use this pipeline too, please let us know in an issue and we will add you to the list.
 
 <table>
