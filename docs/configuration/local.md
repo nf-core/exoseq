@@ -1,4 +1,4 @@
-## QBIC-ExoSeq: Local configuration
+## ngi-ExoSeq: Local configuration
 
 If running the pipeline in a local environment, we highly recommend using Singularity.
 
