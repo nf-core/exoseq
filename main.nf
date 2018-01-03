@@ -4,9 +4,8 @@ vim: syntax=groovy
 -*- mode: groovy;-*-
 
 ========================================================================================
-               QBIC - E X O S E Q    B E S T    P R A C T I C E
+               NGI - E X O S E Q    B E S T    P R A C T I C E
 ========================================================================================
- This is based on previous work at NGI, see webpage for details
  #### Homepage / Documentation
  https://github.com/scilifelab/NGI-ExoSeq
  #### Authors
@@ -20,7 +19,7 @@ Developed based on GATK's best practise, takes set of FASTQ files and performs:
  - recalibration (GATK)
  - realignment (GATK)
  - variant calling (GATK)
- - vairant evaluation (SnpEff)
+ - variant evaluation (SnpEff)
 */
 
 // Package version
