@@ -25,7 +25,7 @@ The NGI-ExoSeq pipeline comes with documentation about the pipeline, found in th
    * [Amazon Web Services](docs/configuration/aws.md)
    * [Swedish UPPMAX clusters](docs/configuration/uppmax.md)
    * [Swedish cs3e Hebbe cluster](docs/configuration/c3se.md)
-   * [Tübingen QBIC clusters](docs/configuration/qbic.md)
+   * [Tübingen QBiC clusters](docs/configuration/qbic.md)
    * [Adding your own system](docs/configuration/adding_your_own.md)
 3. [Running the pipeline](docs/usage.md)
    * [Preparing custom exome capture kits](docs/kits.md)
