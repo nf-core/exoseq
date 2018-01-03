@@ -1,5 +1,12 @@
 Installation Instructions
 =========================
+
+To start using the NGI-ExoSeq pipeline, there are three steps described below:
+
+1. [Install Nextflow](#install-nextflow)
+2. [Install the pipeline](#install-the-pipeline)
+3. [Bundle installation](#bundle-installation)
+
 ## 1) Install NextFlow
 Nextflow runs on most POSIX systems (Linux, Mac OSX etc). It can be installed by running the following commands:
 
