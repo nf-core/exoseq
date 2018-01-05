@@ -3,5 +3,5 @@ extra_fn_clean_exts:
     - _R2
 
 report_section_order:
-    ngi-rnaseq:
+    ngi-exoseq:
         order: -1000
