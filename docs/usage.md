@@ -144,7 +144,7 @@ Instructs Trim Galore to remove bp from the 5' end of read 2 (paired-end reads o
 Instructs Trim Galore to remove bp from the 3' end of read 1 _AFTER_ adapter/quality trimming has been performed.
 
 ### `--three_prime_clip_r2 [int]`
-Instructs Trim Galore to re move bp from the 3' end of read 2 _AFTER_ adapter/quality trimming has been performed.
+Instructs Trim Galore to remove bp from the 3' end of read 2 _AFTER_ adapter/quality trimming has been performed.
 
 
 ## Capture Kits
@@ -177,20 +177,9 @@ Specify this when restarting a pipeline. Nextflow will used cached results from 
 
 You can also supply a run name to resume a specific run: `-resume [run-name]`. Use the `nextflow log` command to show previous run names.
 
-**NB:** Single hyphen (core Nextflow option)
-
 ### `-c`
 Specify the path to a specific config file (this is a core NextFlow command). Useful if using different UPPMAX
 projects or different sets of reference genomes.
-
-**NB:** Single hyphen (core Nextflow option)
-
-Note - you can use this to override defaults. For example, we run on UPPMAX but don't want to use the MultiQC
-environment module as is the default. So we specify a config file using `-c` that contains the following:
-
-```groovy
-process.$multiqc.module = []
-```
 
 ### `--max_memory`
 Use to set a top-limit for the default memory requirement for each process.
@@ -204,33 +193,8 @@ Should be a string in the format integer-unit. eg. `--max_time '2.h'`
 Use to set a top-limit for the default CPU requirement for each process.
 Should be a string in the format integer-unit. eg. `--max_cpus 1`
 
-### `--plaintext_email`
-Set to receive plain-text e-mails instead of HTML formatted.
-
-### `--sampleLevel`
-Used to turn of the edgeR MDS and heatmap. Set automatically when running on fewer than 3 samples.
-
-### `--rlocation`
-Some steps in the pipeline run R with required modules. By default, the pipeline will install
-these modules to `~/R/nxtflow_libs/` if not present. You can specify what path to use with this
-command line flag.
-
 ### `--multiqc_config`
 If you would like to supply a custom config file to MultiQC, you can specify a path with `--multiqc_config`. This is used instead of the config file specific to the pipeline.
-
-### `--clusterOptions`
-Submit arbitrary cluster scheduler options (not available for all config profiles). For instance, you could use `--clusterOptions '-p devcore'` to run on the development node (though won't work with default process time requests).
-
-## Stand-alone scripts
-The `bin` directory contains some scripts used by the pipeline which may also be run manually:
-
-* `dupRadar.r`
-  * dupRadar script used in the _dupRadar_ pipeline process.
-* `edgeR_heatmap_MDS.r`
-  * edgeR script used in the _Sample Correlation_ process
-* `Exome-pipeline-from-BAM.sh`
-  * SLURM script used to mimic pipeline QC steps, taking an aligned BAM file as input.
-  * Potentially unmaintained, use at your own risk!
 
 
 ---
