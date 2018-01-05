@@ -31,7 +31,7 @@ helpMessage = """
 NGI-ExoSeq : Exome/Targeted sequence capture best practice analysis v${version}
 ===============================================================================
 
-Usage: nextflow scilifelab/NGI-ExoSeq --reads '*_R{1,2}.fastq.gz' --genome GRCh37
+Usage: nextflow SciLifeLab/NGI-ExoSeq --reads '*_R{1,2}.fastq.gz' --genome GRCh37
 
 This is a typical usage where the required parameters (with no defaults) were
 given. The available paramaters are listed below based on category
