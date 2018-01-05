@@ -552,7 +552,7 @@ process variantCall {
 
 process genotypegvcfs{
     tag "${name}"
-    publishDir "${params.outdir}/GATK_GenotypeGVCFs/", mode: 'copy',
+    publishDir "${params.outdir}/GATK_GenotypeGVCFs/", mode: 'copy'
 
     input:
     set val(name), file(raw_vcf), file(raw_vcf_idx) from raw_variants
@@ -577,7 +577,7 @@ process genotypegvcfs{
 
 process variantSelect {
     tag "${name}"
-    publishDir "${params.outdir}/GATK_VariantSelection", mode: 'copy',
+    publishDir "${params.outdir}/GATK_VariantSelection", mode: 'copy'
 
     input:
     set val(name), file(raw_vcf), file(raw_vcf_idx) from raw_gvcfs
