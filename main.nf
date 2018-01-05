@@ -324,7 +324,7 @@ process sortSam {
     script:
     try{
         def avail_mem = task.memory ? "-m ${task.memory.toBytes().intdiv(task.cpus)}G" : ''
-    } catch{
+    } catch(all){
         echo "Either task.cpus or task.memory are not available on this cluster environment. Therefore we don't specify this explicitly in the function call here."
     }
     """
