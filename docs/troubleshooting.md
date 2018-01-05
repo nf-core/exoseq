@@ -31,8 +31,6 @@ If the pipeline ran without crashing and some samples are missing then there are
 
 Samples that receive less than 5% alignment are skipped for further analysis. You will thus see STAR/Hisat2 output for such samples but nothing more. This limit was set for two reasons, one it doesn't really make any sense to waste CPU hours running on data that bad. Secondly, and most importantly we found that some of the downstream processes would occasionally crash if we allowed it.
 
-### Data organization
-The pipeline can't take a list of multiple input files - it takes a glob expression. If your fastq files are scattered in different paths then we recommend that you generate a directory with symlinked files. If running in paired end mode please make sure that your files are sensibly named so that they can be properly paired. See the previous point.
 
 ## UPPMAX specific options
 
