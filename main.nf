@@ -80,9 +80,6 @@ params.outdir = './results'
 params.saveAlignedIntermediates = false
 
 // Configuration parameters
-params.clusterOptions = false
-params.project = false
-params.cpus = 2
 
 
 // Clipping options
