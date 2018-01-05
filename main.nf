@@ -138,46 +138,38 @@ if (!params.metaFiles[ params.genome ] && ['gfasta', 'bwa_index', 'dbsnp', 'thou
             "files with options '--gfasta', '--bwa_index', '--dbsnp', '--thousandg', '--clinvar', '--exac' and '--gnomad'"
 }
 
-/*
- * Create a channel for input read files
- */
+// Create a channel for input files
+
 Channel
     .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
     .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
     .into { read_files_fastqc; read_files_trimming }
 
-/**
-Validate Input indices for BWA Mem and GATK
-* 
-*/ 
+
+// Validate Input indices for BWA Mem and GATK
+
 if(params.aligner == 'bwa' ){
     bwaId = Channel
         .fromPath("${params.gfasta}.bwt")
         .ifEmpty { exit 1, "BWA index not found: ${params.gfasta}.bwt" }
 }
 
-/**
-* Input channels if required
-* 
-*/ 
+// Set up input channels for certain files (if required)
 
 multiqc_config = file(params.multiqc_config)
 
 
 
-/**
-* Build index for BWA if non exists
-* 
-*/
+// Build BWA Index if this is required
 
 
 if(params.aligner == 'bwa' && !params.bwa_index){
-    //Create Channels
+    // Create Channels
     fasta_for_bwa_index = Channel
         .fromPath("${params.gfasta}")
     fasta_for_samtools_index = Channel
         .fromPath("${params.gfasta}")
-    //Create a BWA index for non-indexed genomes
+    // Create a BWA index for non-indexed genomes
     process makeBWAIndex {
         tag "$params.gfasta"
         publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
@@ -194,7 +186,7 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         bwa index $fasta
         """
     }
-    //Create a FastA index for non-indexed genomes
+    // Create a FastA index for non-indexed genomes
     process makeFastaIndex {
         tag "$params.gfasta"
         publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
