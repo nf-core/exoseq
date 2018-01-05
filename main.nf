@@ -78,6 +78,7 @@ params.saveReference = true
 // Output configuration
 params.outdir = './results'
 params.saveAlignedIntermediates = false
+params.saveIntermediateVariants = false
 
 // Configuration parameters
 
@@ -384,6 +385,7 @@ process recal_bam_files {
     tag "${name}"
     publishDir "${params.outdir}/GATK_Recalibration/", mode: 'copy'
 
+
     input:
     set val(name), file(markdup_bam) from samples_markdup_bam
 
@@ -552,7 +554,8 @@ process variantCall {
 
 process genotypegvcfs{
     tag "${name}"
-    publishDir "${params.outdir}/GATK_GenotypeGVCFs/", mode: 'copy'
+    publishDir "${params.outdir}/GATK_GenotypeGVCFs/", mode: 'copy', 
+    saveAs: {filename -> params.saveIntermediateVariants ? "$filename" : null }
 
     input:
     set val(name), file(raw_vcf), file(raw_vcf_idx) from raw_variants
@@ -577,7 +580,8 @@ process genotypegvcfs{
 
 process variantSelect {
     tag "${name}"
-    publishDir "${params.outdir}/GATK_VariantSelection", mode: 'copy'
+    publishDir "${params.outdir}/GATK_VariantSelection", mode: 'copy', 
+    saveAs: {filename -> params.saveIntermediateVariants ? "$filename" : null }
 
     input:
     set val(name), file(raw_vcf), file(raw_vcf_idx) from raw_gvcfs
@@ -614,7 +618,8 @@ process variantSelect {
 
 process recalSNPs {
     tag "${name}"
-    publishDir "${params.outdir}/variantCallingRecalibrated/", mode: 'copy'
+    publishDir "${params.outdir}/variantCallingRecalibrated/", mode: 'copy', 
+    saveAs: {filename -> params.saveIntermediateVariants ? "$filename" : null }
 
     input:
     set val(name), file(raw_snp), file(raw_snp_idx) from raw_snp
@@ -658,7 +663,8 @@ process recalSNPs {
 
 process recalIndels {
     tag "${name}"
-    publishDir "${params.outdir}/recalibratedIndels/", mode: 'copy'
+    publishDir "${params.outdir}/recalibratedIndels/", mode: 'copy', 
+    saveAs: {filename -> params.saveIntermediateVariants ? "$filename" : null }
 
     input:
     set val(name), file(raw_indel), file(raw_indel_idx) from raw_indels
