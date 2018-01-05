@@ -287,7 +287,6 @@ process bwamem {
 
     script:
     rg="\'@RG\\tID:${params.run_id}\\tSM:${params.run_id}\\tPL:illumina\'"
-    if(params.singleEnd){
     """
          bwa mem \\
         -R $rg \\
@@ -300,21 +299,6 @@ process bwamem {
     # Print version number to standard out
     echo "BWA Version:"\$(bwa 2>&1)
     """
-    } else {
-    """
-        bwa mem \\
-        -R $rg \\
-        -t ${task.cpus} \\
-        -k 2 \\
-        $params.gfasta \\
-        $reads\\
-            > ${name}_bwa.sam
-
-    # Print version number to standard out
-    echo "BWA Version:"\$(bwa 2>&1)
-    """
-
-}
 }
 
 /*
