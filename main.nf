@@ -354,7 +354,6 @@ process markDuplicates {
         INPUT=$sorted_bam \\
         OUTPUT=${name}_markdup.bam \\
         METRICS_FILE=${name}.dup_metrics \\
-        TMP_DIR=tmp \\
         VALIDATION_STRINGENCY=SILENT \\
         REMOVE_DUPLICATES=false \\
         ASSUME_SORTED=false \\
