@@ -461,7 +461,7 @@ process recal_bam_files {
 */ 
 process qualiMap {
     tag "${name}"
-    publishDir "${params.outdir}/qualimap/qualimap", mode: 'copy'
+    publishDir "${params.outdir}/qualimap", mode: 'copy'
     
     input:
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
