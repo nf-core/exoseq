@@ -392,6 +392,7 @@ process recal_bam_files {
     output:
     set val(name), file("${name}_recal.bam"), file("${name}_recal.bai") into samples_recal_bam
     file '.command.log' into gatk_stdout
+    file '.command.log' into gatk_base_recalibration_results
 
     script:
     """
@@ -900,7 +901,9 @@ process multiqc {
     file ('trimgalore/*') from trimgalore_results.collect()
     file ('picard/*') from markdup_results.collect()
     file ('snpEff/*') from snpeff_results.collect()
+    file ('gatk_base_recalibration/*') from gatk_base_recalibration_results.collect()
     file ('gatk_variant_eval/*') from gatk_variant_eval_results.collect()
+    file ('qualimap/*') from qualimap_results.collect()
     file ('software_versions/*') from software_versions_yaml.collect()
 
 
