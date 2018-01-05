@@ -74,7 +74,18 @@ params.exome = true //also default, integrate whole genome later
 params.aligner = 'bwa' //Default, but stay tuned for later ;-) 
 params.saveReference = true
 
-//Clipping options
+
+// Output configuration
+params.outdir = './results'
+params.saveAlignedIntermediates = false
+
+// Configuration parameters
+params.clusterOptions = false
+params.project = false
+params.cpus = 2
+
+
+// Clipping options
 params.notrim = false
 params.clip_r1 = 0
 params.clip_r2 = 0
@@ -94,15 +105,6 @@ params.gfasta = params.metaFiles[ params.genome ] ? params.metaFiles[ params.gen
 params.bwa_index = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].bwa_index ?: false : false
 params.multiqc_config = "$baseDir/conf/multiqc_config.yaml"
 
-
-//Output configuration
-params.outdir = './results'
-params.saveAlignedIntermediates = false
-
-//Configuration parameters
-params.clusterOptions = false
-params.project = false
-params.cpus = 2
 
 
 // Show help when needed
