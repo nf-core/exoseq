@@ -80,8 +80,6 @@ params.outdir = './results'
 params.saveAlignedIntermediates = false
 params.saveIntermediateVariants = false
 
-// Configuration parameters
-
 
 // Clipping options
 params.notrim = false
@@ -103,6 +101,12 @@ params.gfasta = params.metaFiles[ params.genome ] ? params.metaFiles[ params.gen
 params.bwa_index = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].bwa_index ?: false : false
 params.multiqc_config = "$baseDir/conf/multiqc_config.yaml"
 
+// Has the run name been specified by the user?
+//  this has the bonus effect of catching both -name and --name
+custom_runName = params.name
+if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
+  custom_runName = workflow.runName
+}
 
 
 // Show help when needed
