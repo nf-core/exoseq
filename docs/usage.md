@@ -46,26 +46,19 @@ This version number will be logged in reports when you run the pipeline, so that
 ### `-profile`
 Use this parameter to choose a configuration profile. Each profile is designed for a different compute environment - follow the links below to see instructions for running on that system. Available profiles are:
 
-* `docker`
-    * A generic configuration profile to be used with [Docker](http://docker.com/)
-    * Runs using the `local` executor and pulls software from dockerhub: [`SciLifeLab/NGI-ExoSeq`](http://hub.docker.com/r/scilifelab/ngi-ExoSeq/)
-* `uppmax`, `uppmax_modules`, `uppmax_devel`
+
+* `uppmax`
     * Designed to be used on the Swedish [UPPMAX](http://uppmax.uu.se/) clusters such as `milou`, `rackham`, `bianca` and `irma`
     * See [`docs/configuration/uppmax.md`](configuration/uppmax.md)
 * `hebbe`
     * Designed to be run on the [c3se Hebbe cluster](http://www.c3se.chalmers.se/index.php/Hebbe) in Chalmers, Gothenburg.
     * See [`docs/configuration/c3se.md`](configuration/c3se.md)
-* `binac`, `cfc`
+* `binac`, `cfc`, `qbic-devel`
     * Profiles for clusters at QBiC in Tübingen, Germany
     * See [`docs/configuration/qbic.md`](configuration/qbic.md)
-* `aws`
-    * A starter configuration for running the pipeline on Amazon Web Services. Uses docker and Spark.
-    * See [`docs/configuration/aws.md`](configuration/aws.md)
 * `standard`
-    * The default profile, used if `-profile` is not specified at all. Runs locally and expects all software to be installed and available on the `PATH`.
+    * The default profile, used if `-profile` is not specified at all. Runs locally and uses (Singularity)[https://github.com/singularityware/singularity] to run tools.
     * This profile is mainly designed to be used as a starting point for other configurations and is inherited by most of the other profiles.
-* `none`
-    * No configuration at all. Useful if you want to build your own config from scratch and want to avoid loading in the default `base` config profile (not recommended).
 
 ### `--reads`
 Use this to specify the location of your input FastQ files. For example:
