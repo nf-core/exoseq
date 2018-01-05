@@ -382,6 +382,7 @@ process markDuplicates {
 */ 
 process recal_bam_files {
     tag "${name}"
+    publishDir "${params.outdir}/GATK_Recalibration/", mode: 'copy'
 
     input:
     set val(name), file(markdup_bam) from samples_markdup_bam
