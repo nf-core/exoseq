@@ -1,18 +1,16 @@
-Howto install Exome-Kits
-========================
+# Installation of Exome-Kits
 
 The pipeline follows [best-practices](https://software.broadinstitute.org/gatk/best-practices/bp_3step.php?case=GermShortWGS) defined by the Broad Institute of MIT and Harvard. You need to specify the correct exome capture kits that were used to sequence your samples and prepare corresponding `interval_list` and `dict` files for that purpose. 
 
-First Step
-----------
+## First Step
+
 
 Prepare sequence dictionary for your reference genome.
 ```
 picard CreateSequenceDictionary O=GRCh37.dict R=GRCh37.fa 
 ```
 
-Second Step
------------
+## Second Step
 
 Prepare the `interval_list` files required by GATK for the analysis. 
 
