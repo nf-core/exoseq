@@ -338,7 +338,7 @@ process sortSam {
 
 process markDuplicates {
     tag "${name}"
-    publishDir "${params.outdir}/markDup/metrics", mode: 'copy',
+    publishDir "${params.outdir}/Picard_Markduplicates/metrics", mode: 'copy',
         saveAs: { filename -> filename.indexOf(".dup_metrics") > 0 ? filename : null }
 
     input:
@@ -383,7 +383,7 @@ process markDuplicates {
 */ 
 process recal_bam_files {
     tag "${name}"
-    publishDir "${params.outdir}/GATK_Recalibration/", mode: 'copy'
+    publishDir "${params.outdir}/GATK_Recalibration", mode: 'copy'
 
 
     input:
@@ -430,7 +430,7 @@ process recal_bam_files {
  * 
 */ process realign {
     tag "${name}"
-    publishDir "${params.outdir}/realigned/alignment", mode: 'copy',
+    publishDir "${params.outdir}/GATK_IndelRealigner", mode: 'copy',
         saveAs: {filename -> filename.replaceFirst(/realign/, "sorted_dupmarked_recalibrated_realigned")}
 
     input:
@@ -496,7 +496,7 @@ process qualiMap {
 */ 
 process variantCall {
     tag "${name}"
-    publishDir "${params.outdir}/variantCalling/", mode: 'copy',
+    publishDir "${params.outdir}/GATK_VariantCalling/", mode: 'copy',
         saveAs: {filename -> filename.replaceFirst(/variants/, "raw_variants")}
 
     input:
@@ -618,7 +618,7 @@ process variantSelect {
 
 process recalSNPs {
     tag "${name}"
-    publishDir "${params.outdir}/variantCallingRecalibrated/", mode: 'copy', 
+    publishDir "${params.outdir}/GATK_RecalibrateSNPs/", mode: 'copy', 
     saveAs: {filename -> params.saveIntermediateVariants ? "$filename" : null }
 
     input:
@@ -663,7 +663,7 @@ process recalSNPs {
 
 process recalIndels {
     tag "${name}"
-    publishDir "${params.outdir}/recalibratedIndels/", mode: 'copy', 
+    publishDir "${params.outdir}/GATK_RecalibrateIndels", mode: 'copy', 
     saveAs: {filename -> params.saveIntermediateVariants ? "$filename" : null }
 
     input:
@@ -714,6 +714,8 @@ filtered_snp
 
 process combineVariants {
     tag "$name"
+    publishDir "${params.outdir}/GATK_CombineVariants/", mode: 'copy', 
+    saveAs: {filename -> params.saveIntermediateVariants ? "$filename" : null }
 
     input:
     set file(fsnp), file(fsnp_idx), file(findel), file(findel_idx) from variants_filtered
@@ -739,7 +741,8 @@ process combineVariants {
 */
 process variantAnnotatesnpEff {
     tag "$name"
-    publishDir "${params.outdir}/annotatedVariants/", mode: 'copy'
+    publishDir "${params.outdir}/SNPEFF_AnnotatedVariants/", mode: 'copy', 
+    saveAs: {filename -> params.saveIntermediateVariants ? "$filename" : null }
 
     input:
     set file(phased_vcf), file(phased_vcf_ind) from combined_variants_snpEff
@@ -773,7 +776,7 @@ process variantAnnotatesnpEff {
 
 process variantAnnotateGATK{     
     tag "$name"
-    publishDir "${params.outdir}/annotatedVariants/", mode: 'copy'
+    publishDir "${params.outdir}/GATK_AnnotatedVariants", mode: 'copy'
 
     input:
     set file(phased_vcf), file(phased_vcf_ind) from combined_variants_gatk
@@ -801,7 +804,7 @@ process variantAnnotateGATK{
 
 process variantEvaluate {
     tag "$name"
-    publishDir "${params.outdir}/${name}/variants", mode: 'copy'
+    publishDir "${params.outdir}/GATK_VariantEvaluate", mode: 'copy'
 
     input:
     set file("${name}_combined_variants.vcf"), file("${name}_combined_variants.vcf.idx") from combined_variants_evaluate
