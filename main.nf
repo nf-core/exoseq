@@ -322,7 +322,7 @@ process sortSam {
     set val(name), file("${raw_sam}.sorted.bam") into samples_sorted_bam
 
     script:
-    def avail_mem = task.memory ? "-m ${task.memory.toBytes().intdiv(task.cpus)}G" : ''
+    def avail_mem = task.memory ? "-m ${task.memory.toBytes().intdiv(task.cpus)}" : ''
     """
     samtools sort \\
         $raw_sam \\
