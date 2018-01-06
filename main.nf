@@ -404,6 +404,7 @@ process recal_bam_files {
         -cov QualityScoreCovariate \\
         -cov CycleCovariate \\
         -cov ContextCovariate \\
+        -nct ${task.cpus} \\
         -U \\
         -OQ \\
         --default_platform illumina \\
