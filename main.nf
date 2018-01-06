@@ -322,11 +322,7 @@ process sortSam {
     set val(name), file("${raw_sam}.sorted.bam") into samples_sorted_bam
 
     script:
-    try{
-        def avail_mem = task.memory ? "-m ${task.memory.toBytes().intdiv(task.cpus)}G" : ''
-    } catch(all){
-        echo "Either task.cpus or task.memory are not available on this cluster environment. Therefore we don't specify this explicitly in the function call here."
-    }
+    def avail_mem = task.memory ? "-m ${task.memory.toBytes().intdiv(task.cpus)}G" : ''
     """
     samtools sort \\
         $raw_sam \\
