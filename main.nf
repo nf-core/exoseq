@@ -345,7 +345,7 @@ process markDuplicates {
     set val(name), file(sorted_bam) from samples_sorted_bam
 
     output:
-    set val(name), file("${name}_markdup.bam"), file("${name}_markdup.bam.bai") into samples_markdup_bam
+    set val(name), file("${name}_markdup.bam"), file("${name}_markdup.bai") into samples_markdup_bam
     file("${name}.dup_metrics") into markdup_results
     file '.command.log' into markDuplicates_stdout
 
