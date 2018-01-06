@@ -345,7 +345,7 @@ process markDuplicates {
     set val(name), file(sorted_bam) from samples_sorted_bam
 
     output:
-    set val(name), file("${name}_markdup.bam") into samples_markdup_bam
+    set val(name), file("${name}_markdup.bam"), file("${name}_markdup.bam.bai") into samples_markdup_bam
     file("${name}.dup_metrics") into markdup_results
     file '.command.log' into markDuplicates_stdout
 
@@ -366,7 +366,7 @@ process markDuplicates {
         VERBOSITY=INFO \\
         QUIET=false \\
         COMPRESSION_LEVEL=5 \\
-        CREATE_INDEX=false \\
+        CREATE_INDEX=true \\
         MAX_RECORDS_IN_RAM=500000 \\
         CREATE_MD5_FILE=false \\
         GA4GH_CLIENT_SECRETS=''
