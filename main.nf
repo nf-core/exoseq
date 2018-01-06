@@ -405,6 +405,7 @@ process recal_bam_files {
         -cov CycleCovariate \\
         -cov ContextCovariate \\
         -nct ${task.cpus} \\
+        -L $params.target \\
         -U \\
         -OQ \\
         --default_platform illumina \\
