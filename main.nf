@@ -418,6 +418,7 @@ process recal_bam_files {
         -R $params.gfasta \\
         -o ${name}_recal.bam \\
         -baq RECALCULATE \\
+        -nct ${task.cpus} \\
         -U \\
         -OQ \\
         -l INFO
