@@ -14,16 +14,16 @@ and processes data using the following steps:
 * [Picard](#picard) - mark PCR duplicates
 * [QualiMap2](#qualimap2) - quality control metrics
 * [GATK](#gatk) - Genome Analysis Toolkit
-	- [BAM recalibration](#bam-recal) - recalibrate BAM file
-	- [BAM realignment](#bam-realign) - realing BAM file around indels
+	- [BAM recalibration](#bam-recalibration) - recalibrate BAM file
+	- [BAM realignment](#bam-realignment) - realing BAM file around indels
 	- [HaplotypeCaller](#haplotypecaller) - call variants in GVCF mode
-	- [GenotypeGVCFs](#gvcf) - genotype generate GVCFs
+	- [GenotypeGVCFs](#genotypegvcfs) - genotype generate GVCFs
 	- [SelectVariants](#selectvariants) - select variants
-	- [SNP recalibration](#snp-recal) - recalibrate SNPs using Omni, 1000G and dbSNP databases 
-	- [Indel recalibration](#indel-recal) - recalibrate INDELS using the Mills golden dataset
-	- [CombineVariants](#combine-var) - combine recalibrated files
-	- [VariantAnnotator](#annotate-var) - annotate variants
-	- [VariantEval](#eval-var) - evaluate variants
+	- [SNP recalibration](#snp-recalibration) - recalibrate SNPs using Omni, 1000G and dbSNP databases 
+	- [Indel recalibration](#indel-recalibration) - recalibrate INDELS using the Mills golden dataset
+	- [CombineVariants](#combinevariants) - combine recalibrated files
+	- [VariantAnnotator](#variantannotator) - annotate variants
+	- [VariantEval](#varianteval) - evaluate variants
 * [SnpEff](#snpeff) - annotate variants
 * [MultiQC](#multiqc) - aggregate report, describing results of the whole pipeline
 
@@ -67,9 +67,7 @@ BWA is a read aligner designed for RNA sequencing.  BWA stands for Spliced Trans
 
 The BWA section of the MultiQC report shows a bar plot with alignment rates: good samples should have most reads as _Uniquely mapped_ and few _Unmapped_ reads.
 
-![BWA](images/BWA_alignment_plot.png)
-
-**Output directory: `results/BWA`**
+**Output directory: `results/BWAmem`**
 
 * `Sample_Aligned.sortedByCoord.out.bam`
   * The aligned BAM file
@@ -84,53 +82,76 @@ The BWA section of the MultiQC report shows a bar plot with alignment rates: goo
 ## Picard
 [Picard MarkDuplicates](http://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates) locates and tags duplicate reads in a BAM or SAM file, where duplicate reads are defined as originating from a single fragment of DNA. Duplicates can arise during sample preparation e.g. library construction using PCR.
 
-The MarkDuplicates tool works by comparing sequences in the 5 prime positions of both reads and read-pairs in a SAM/BAM file. An BARCODE_TAG option is available to facilitate duplicate marking using molecular barcodes. After duplicate reads are collected, the tool differentiates the primary and duplicate reads using an algorithm that ranks reads by the sums of their base-quality scores (default method).
+The MarkDuplicates tool works by comparing sequences in the 5 prime positions of both reads and read-pairs in a SAM/BAM file. After duplicate reads are collected, the tool differentiates the primary and duplicate reads using an algorithm that ranks reads by the sums of their base-quality scores (default method).
 
 The tool's main output is a new SAM or BAM file, in which duplicates have been identified in the SAM flags field for each read. Duplicates are marked with the hexadecimal value of 0x0400, which corresponds to a decimal value of 1024. If you are not familiar with this type of annotation, please see the following [blog post](https://software.broadinstitute.org/gatk/blog?id=7019) for additional information.
 
 MarkDuplicates also produces a metrics file indicating the numbers of duplicates for both single- and paired-end reads. If desired, duplicates can be removed using the REMOVE_DUPLICATE and REMOVE_SEQUENCING_DUPLICATES options.
 
-**Output directory: `results/picard`**
+**Output directory: `results/Picard_Markduplicates/metrics`**
 
 * `to_do`
 
 Picard MarkDuplicates documentation: [picard docs](http://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates)
 
+<!-- to do -->
+
 ## QualiMap2
 
-<!-- to do -->
+**Output directory: `results/qualimap`**
+
 ## GATK
 
 ### BAM recalibration
 
+**Output directory: `results/GATK_Recalibration`**
+
 ### BAM realignment
+
+**Output directory: `results/GATK_IndelRealigner`**
 
 ### HaplotypeCaller
 
+**Output directory: `results/GATK_VariantCalling`**
+
 ### GenotypeGVCFs
+
+**Output directory: `results/GATK_GenotypeGVCFs`**
 
 ### SelectVariants
 
+**Output directory: `results/GATK_VariantSelection`**
+
 ### SNP recalibration
+
+**Output directory: `results/GATK_RecalibrateSNPs`**
 
 ### Indel recalibration
 
+**Output directory: `results/GATK_RecalibrateIndels`**
+
 ### CombineVariants
+
+**Output directory: `results/GATK_CombineVariants`**
 
 ### VariantAnnotator
 
+**Output directory: `results/GATK_AnnotatedVariants`**
+
 ### VariantEval
-<!-- to do -->
+
+**Output directory: `results/GATK_VariantEvaluate`**
 
 ## SnpEff
 
+**Output directory: `results/SNPEFF_AnnotatedVariants`**
 
-
+<!-- to do -->
 
 ## MultiQC
 [MultiQC](http://multiqc.info) is a visualisation tool that generates a single HTML report summarising all samples in your project. Most of the pipeline QC results are visualised in the report and further statistics are available in within the report data directory.
 
-**Output directory: `results/multiqc`**
+**Output directory: `results/MultiQC`**
 
 * `Project_multiqc_report.html`
   * MultiQC report - a standalone HTML file that can be viewed in your web browser
