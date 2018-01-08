@@ -10,7 +10,7 @@ and processes data using the following steps:
 
 * [FastQC](#fastqc) - read quality control
 * [TrimGalore](#trimgalore) - adapter trimming
-* [BWA](#bwa) - alignment
+* [BWA-MEM](#bwa-mem) - alignment
 * [Picard](#picard) - mark PCR duplicates
 * [QualiMap2](#qualimap2) - quality control metrics
 * [GATK](#gatk) - Genome Analysis Toolkit
@@ -60,43 +60,23 @@ Contains FastQ files with quality and adapter trimmed reads for each sample, alo
 
 Single-end data will have slightly different file names and only one FastQ file per sample.
 
-## BWA
+## BWA-MEM
 <!-- to do-->
 
-BWA is a read aligner designed for RNA sequencing.  BWA stands for Spliced Transcripts Alignment to a Reference, it produces results comparable to TopHat (the aligned previously used by NGI for RNA alignments) but is much faster.
-
-The BWA section of the MultiQC report shows a bar plot with alignment rates: good samples should have most reads as _Uniquely mapped_ and few _Unmapped_ reads.
+BWA-MEM is an alignment algorithm for aligning sequence reads or long query sequences against a large reference genome, e.g. human. It automatically chooses between local and end-to-end alignments, supports paired-end reads. The algorithm is applicable to a wide range of sequence lengths from 70bp to a few megabases. BWA-MEM is robust to sequencing errors and shows better performance than several state-of-art read aligners to date. 
 
 **Output directory: `results/BWAmem`**
-
-* `Sample_Aligned.sortedByCoord.out.bam`
-  * The aligned BAM file
-* `Sample_Log.final.out`
-  * The BWA alignment report, contains mapping results summary
-* `Sample_Log.out` and `Sample_Log.progress.out`
-  * BWA log files, containing a lot of detailed information about the run. Typically only useful for debugging purposes.
-* `Sample_SJ.out.tab`
-  * Filtered splice junctions detected in the mapping
-
 
 ## Picard
 [Picard MarkDuplicates](http://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates) locates and tags duplicate reads in a BAM or SAM file, where duplicate reads are defined as originating from a single fragment of DNA. Duplicates can arise during sample preparation e.g. library construction using PCR.
 
-The MarkDuplicates tool works by comparing sequences in the 5 prime positions of both reads and read-pairs in a SAM/BAM file. After duplicate reads are collected, the tool differentiates the primary and duplicate reads using an algorithm that ranks reads by the sums of their base-quality scores (default method).
-
-The tool's main output is a new SAM or BAM file, in which duplicates have been identified in the SAM flags field for each read. Duplicates are marked with the hexadecimal value of 0x0400, which corresponds to a decimal value of 1024. If you are not familiar with this type of annotation, please see the following [blog post](https://software.broadinstitute.org/gatk/blog?id=7019) for additional information.
-
-MarkDuplicates also produces a metrics file indicating the numbers of duplicates for both single- and paired-end reads. If desired, duplicates can be removed using the REMOVE_DUPLICATE and REMOVE_SEQUENCING_DUPLICATES options.
+The MarkDuplicates tool works by comparing sequences in the 5 prime positions of both reads and read-pairs in a SAM/BAM file. After duplicate reads are collected, the tool differentiates the primary and duplicate reads using an algorithm that ranks reads by the sums of their base-quality scores (default method). For more information visit the [picard docs](http://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates).
 
 **Output directory: `results/Picard_Markduplicates/metrics`**
 
-* `to_do`
-
-Picard MarkDuplicates documentation: [picard docs](http://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates)
-
-<!-- to do -->
-
 ## QualiMap2
+
+[Qualimap 2](http://qualimap.bioinfo.cipf.es/) represents a next step in the QC analysis of HTS data. Along with comprehensive single-sample analysis of alignment data, it includes new modes that allow simultaneous processing and comparison of multiple samples.
 
 **Output directory: `results/qualimap`**
 
@@ -104,49 +84,69 @@ Picard MarkDuplicates documentation: [picard docs](http://broadinstitute.github.
 
 ### BAM recalibration
 
+The GATK BaseRecalibrator detects systematic errors in base quality scores. More information can be found here: [HATK BaseRecalibrator](https://software.broadinstitute.org/gatk/documentation/tooldocs/current/org_broadinstitute_gatk_tools_walkers_bqsr_BaseRecalibrator.php)
+
 **Output directory: `results/GATK_Recalibration`**
 
 ### BAM realignment
+
+The GATK [RealignerTargetCreator](https://software.broadinstitute.org/gatk/documentation/tooldocs/current/org_broadinstitute_gatk_tools_walkers_indels_RealignerTargetCreator.php) is used to define intervals to target for local realignment and the GATK [IndelRealigner](https://software.broadinstitute.org/gatk/documentation/tooldocs/current/org_broadinstitute_gatk_tools_walkers_indels_IndelRealigner.php) is used to perform local realignment of reads around indels.
 
 **Output directory: `results/GATK_IndelRealigner`**
 
 ### HaplotypeCaller
 
+The GATK [HaplotypeCaller](https://software.broadinstitute.org/gatk/documentation/tooldocs/current/org_broadinstitute_gatk_tools_walkers_haplotypecaller_HaplotypeCaller.php) calls germline SNPs, insertions and deletions via local re-assembly of haplotypes.
+
 **Output directory: `results/GATK_VariantCalling`**
 
 ### GenotypeGVCFs
+
+The GATK [GenotypeGVCFs]() performs joint genotyping on gVCF files produced by the GATK [HaplotypeCaller](https://software.broadinstitute.org/gatk/documentation/tooldocs/current/org_broadinstitute_gatk_tools_walkers_haplotypecaller_HaplotypeCaller.php).
 
 **Output directory: `results/GATK_GenotypeGVCFs`**
 
 ### SelectVariants
 
+The GATK [SelectVariants](https://software.broadinstitute.org/gatk/documentation/tooldocs/current/org_broadinstitute_gatk_tools_walkers_variantutils_SelectVariants.php) selects a subset of variants from a larger callset.
+
 **Output directory: `results/GATK_VariantSelection`**
 
 ### SNP recalibration
+
+The GATK [VariantRecalibrator](https://software.broadinstitute.org/gatk/documentation/tooldocs/current/org_broadinstitute_gatk_tools_walkers_variantrecalibration_VariantRecalibrator.php) builds a recalibration model only for SNPs (emitting indels untouched in the output VCF) to score variant quality for filtering purposes.
 
 **Output directory: `results/GATK_RecalibrateSNPs`**
 
 ### Indel recalibration
 
+The GATK [VariantRecalibrator](https://software.broadinstitute.org/gatk/documentation/tooldocs/current/org_broadinstitute_gatk_tools_walkers_variantrecalibration_VariantRecalibrator.php) builds a recalibration model only for indels (emitting SNPs untouched in the output VCF) to score variant quality for filtering purposes.
+
 **Output directory: `results/GATK_RecalibrateIndels`**
 
 ### CombineVariants
+
+The GATK [CombineVariants](https://software.broadinstitute.org/gatk/documentation/tooldocs/current/org_broadinstitute_gatk_tools_walkers_variantutils_CombineVariants.php) combines variant records from different sources.
 
 **Output directory: `results/GATK_CombineVariants`**
 
 ### VariantAnnotator
 
+The GATK [VariantAnnotator](https://software.broadinstitute.org/gatk/gatkdocs/3.6-0/org_broadinstitute_gatk_tools_walkers_annotator_VariantAnnotator.php) annotates variant calls with context information.
+
 **Output directory: `results/GATK_AnnotatedVariants`**
 
 ### VariantEval
+
+The GATK [VariantEval](https://software.broadinstitute.org/gatk/documentation/tooldocs/current/org_broadinstitute_gatk_tools_walkers_varianteval_VariantEval.php) general-purpose tool for variant evaluation (% in dbSNP, genotype concordance, Ti/Tv ratios, and a lot more).
 
 **Output directory: `results/GATK_VariantEvaluate`**
 
 ## SnpEff
 
-**Output directory: `results/SNPEFF_AnnotatedVariants`**
+[SnpEff](http://snpeff.sourceforge.net/) is a variant annotation and effect prediction tool. It annotates and predicts the effects of genetic variants (such as amino acid changes). 
 
-<!-- to do -->
+**Output directory: `results/SNPEFF_AnnotatedVariants`**
 
 ## MultiQC
 [MultiQC](http://multiqc.info) is a visualisation tool that generates a single HTML report summarising all samples in your project. Most of the pipeline QC results are visualised in the report and further statistics are available in within the report data directory.
