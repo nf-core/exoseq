@@ -6,3 +6,5 @@ conf/kits/*
 .DS_Store
 tests/
 test/
+.runTest.sh.swp
+runTest.sh

@@ -23,7 +23,7 @@ Developed based on GATK's best practise, takes set of FASTQ files and performs:
 */
 
 // Package version
-version = '0.8'
+version = '0.8.1'
 
 // Help message
 helpMessage = """
@@ -39,6 +39,7 @@ given. The available paramaters are listed below based on category
 Required parameters:
 --reads                        Absolute path to project directory
 --genome                       Name of iGenomes reference
+
 
 Output:
 --outdir                       Path where the results to be saved [Default: './results']
@@ -58,6 +59,7 @@ Genome/Variation files:
 --bwa_index                    Absolute path to bwa genome index
 
 Other options:
+--exome                        Exome data, if this is not set, run as genome data
 --project                      Uppnex project to user for SLURM executor
 
 For more detailed information regarding the parameters and usage refer to package
@@ -65,12 +67,13 @@ documentation at https:// github.com/scilifelab/NGI-ExoSeq
 """
 
 // Variables and defaults
+params.name = false
 params.help = false
 params.reads = false
 params.singleEnd = false
 params.genome = false
 params.run_id = false
-params.exome = true //also default, integrate whole genome later
+params.exome = false //default genome, set to true to run restricting to exome positions
 params.aligner = 'bwa' //Default, but stay tuned for later ;-) 
 params.saveReference = true
 
@@ -115,21 +118,7 @@ if (params.help){
     exit 0
 }
 
-// Nextflow version check
-nf_required_version = '0.25.0'
-try {
-    if( ! workflow.nextflow.version.matches(">= $nf_required_version") ){
-        throw GroovyException('Nextflow version too old')
-        }
-} catch (all) {
-    log.error "====================================================\n" +
-              "  Nextflow version $nf_required_version required! You are running v$workflow.nextflow.version.\n" +
-              "  Pipeline execution will continue, but things may break.\n" +
-              "  Please run `nextflow self-update` to update Nextflow.\n" +
-              "============================================================"
-}
-
-// Check blocks for ceratin required parameters, to see they are given and exists
+// Check blocks for certain required parameters, to see they are given and exist
 if (!params.reads || !params.genome){
     exit 1, "Parameters '--reads' and '--genome' are required to run the pipeline"
 }
@@ -137,10 +126,10 @@ if (!params.kitFiles[ params.kit ] && ['bait', 'target'].count{ params[it] } != 
     exit 1, "Kit '${params.kit}' is not available in pre-defined config, so " +
             "provide all kit specific files with option '--bait' and '--target'"
 }
-if (!params.metaFiles[ params.genome ] && ['gfasta', 'bwa_index', 'dbsnp', 'thousandg', 'clinvar', 'exac', 'gnomad'].count{ params[it] } != 7){
-    exit 1, "Genome '${params.genome}' is not available in pre-defined config, so you need to provide all genome specific " +
-            "files with options '--gfasta', '--bwa_index', '--dbsnp', '--thousandg', '--clinvar', '--exac' and '--gnomad'"
-}
+ if (!params.metaFiles[ params.genome ] && ['gfasta', 'bwa_index', 'dbsnp', 'thousandg', 'mills', 'omni'].count{ params[it] } != 6){
+     exit 1, "Genome '${params.genome}' is not available in pre-defined config, so you need to provide all genome specific " +
+             "files with options '--gfasta', '--bwa_index', '--dbsnp', '--thousandg', '--mills' and '--omni'"
+ }
 
 // Create a channel for input files
 
@@ -162,10 +151,55 @@ if(params.aligner == 'bwa' ){
 
 multiqc_config = file(params.multiqc_config)
 
+// Create a summary for the logfile
+def summary = [:]
+summary['Run Name']     = custom_runName ?: workflow.runName
+summary['Reads']        = params.reads
+summary['Data Type']    = params.singleEnd ? 'Single-End' : 'Paired-End'
+summary['Genome']       = params.genome
+summary['WES/WGS']      = params.exome ? 'WES' : 'WGS'
+summary['Trim R1'] = clip_r1
+summary['Trim R2'] = clip_r2
+summary["Trim 3' R1"] = three_prime_clip_r1
+summary["Trim 3' R2"] = three_prime_clip_r2
+if(params.aligner == 'bwa'){
+    summary['Aligner'] = "BWA"
+    if(params.bwa_index)          summary['BWA Index']   = params.bwa_index
+    else if(params.gfasta)          summary['Fasta Ref']    = params.gfasta
+}
+summary['Save Intermediate Aligned Files'] = params.saveAlignedIntermediates ? 'Yes' : 'No'
+summary['Save Intermediate Variant Files'] = params.saveIntermediateVariants ? 'Yes' : 'No'
+summary['Max Memory']     = params.max_memory
+summary['Max CPUs']       = params.max_cpus
+summary['Max Time']       = params.max_time
+summary['Output dir']     = params.outdir
+summary['Working dir']    = workflow.workDir
+summary['Container']      = workflow.container
+if(workflow.revision) summary['Pipeline Release'] = workflow.revision
+summary['Current home']   = "$HOME"
+summary['Current user']   = "$USER"
+summary['Current path']   = "$PWD"
+summary['Script dir']     = workflow.projectDir
+summary['Config Profile'] = workflow.profile
+log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
+log.info "========================================="
 
+
+// Nextflow version check
+nf_required_version = '0.25.0'
+try {
+    if( ! workflow.nextflow.version.matches(">= $nf_required_version") ){
+        throw GroovyException('Nextflow version too old')
+        }
+} catch (all) {
+    log.error "====================================================\n" +
+              "  Nextflow version $nf_required_version required! You are running v$workflow.nextflow.version.\n" +
+              "  Pipeline execution will continue, but things may break.\n" +
+              "  Please run `nextflow self-update` to update Nextflow.\n" +
+              "============================================================"
+}
 
 // Build BWA Index if this is required
-
 
 if(params.aligner == 'bwa' && !params.bwa_index){
     // Create Channels
@@ -395,6 +429,7 @@ process recal_bam_files {
     file '.command.log' into gatk_base_recalibration_results
 
     script:
+    if(params.exome){
     """
     gatk -T BaseRecalibrator \\
         -I $markdup_bam \\
@@ -426,6 +461,38 @@ process recal_bam_files {
     # Print version number to standard out
     echo "GATK version "\$(gatk --version 2>&1)
     """
+    } else {
+    """
+    gatk -T BaseRecalibrator \\
+        -I $markdup_bam \\
+        -R $params.gfasta \\
+        -o ${name}_table.recal \\
+        -cov ReadGroupCovariate \\
+        -cov QualityScoreCovariate \\
+        -cov CycleCovariate \\
+        -cov ContextCovariate \\
+        -nct ${task.cpus} \\
+        -U \\
+        -OQ \\
+        --default_platform illumina \\
+        --knownSites $params.dbsnp \\
+        -l INFO
+
+    gatk -T PrintReads \\
+        -BQSR ${name}_table.recal \\
+        -I $markdup_bam \\
+        -R $params.gfasta \\
+        -o ${name}_recal.bam \\
+        -baq RECALCULATE \\
+        -nct ${task.cpus} \\
+        -U \\
+        -OQ \\
+        -l INFO
+
+    # Print version number to standard out
+    echo "GATK version "\$(gatk --version 2>&1)
+    """    
+    }
 }
 
 
