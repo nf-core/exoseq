@@ -163,7 +163,7 @@ summary['Trim R2'] = params.clip_r2
 summary["Trim 3' R1"] = params.three_prime_clip_r1
 summary["Trim 3' R2"] = params.three_prime_clip_r2
 if(params.aligner == 'bwa'){
-    summary['Aligner'] = "BWA"
+    summary['Aligner'] = "BWA Mem"
     if(params.bwa_index)          summary['BWA Index']   = params.bwa_index
     else if(params.gfasta)          summary['Fasta Ref']    = params.gfasta
 }
