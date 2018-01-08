@@ -56,7 +56,7 @@ NGI-ExoSeq is now used by a number of core sequencing and bioinformatics facilit
     <td>https://ngisweden.scilifelab.se/</td>
   </tr>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/apeltzer/NGI-ExoSeq/master/docs/images/qbic_logo.png" width="200"></td>
+    <td><img src="https://raw.githubusercontent.com/SciLifeLab/NGI-ExoSeq/master/docs/images/QBiC_logo.png" width="200"></td>
     <td>Quantitative Biology Center (QBiC), Germany</td>
     <td>https://portal.qbic.uni-tuebingen.de/portal/</td>
   </tr>
