@@ -158,10 +158,10 @@ summary['Reads']        = params.reads
 summary['Data Type']    = params.singleEnd ? 'Single-End' : 'Paired-End'
 summary['Genome']       = params.genome
 summary['WES/WGS']      = params.exome ? 'WES' : 'WGS'
-summary['Trim R1'] = clip_r1
-summary['Trim R2'] = clip_r2
-summary["Trim 3' R1"] = three_prime_clip_r1
-summary["Trim 3' R2"] = three_prime_clip_r2
+summary['Trim R1'] = params.clip_r1
+summary['Trim R2'] = params.clip_r2
+summary["Trim 3' R1"] = params.three_prime_clip_r1
+summary["Trim 3' R2"] = params.three_prime_clip_r2
 if(params.aligner == 'bwa'){
     summary['Aligner'] = "BWA"
     if(params.bwa_index)          summary['BWA Index']   = params.bwa_index
