@@ -493,27 +493,21 @@ process qualiMap {
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
 
     output:
-    file "${name}_qualimap" into qualimap_results
+    file "${name}" into qualimap_results
     file '.command.log' into qualimap_stdout
 
     script:
     gcref = ''
     if(params.genome == 'GRCh37') gcref = '-gd HUMAN'
     if(params.genome == 'GRCm38') gcref = '-gd MOUSE'
-    listsites = ''
-    if(params.exome) listsites ="-gff ${params.target_bed}"
     """
     qualimap bamqc $gcref \\
     -bam $realign_bam \\
     -outdir ${name}_qualimap \\
     --skip-duplicated \\
     --collect-overlap-pairs \\
-    $listsites \\
     -nt ${task.cpus} \\
     --java-mem-size=${task.memory.toGiga()}G \\
-
-    # Print version number to standard out
-    echo "QualiMap version "\$(qualimap --version 2>&1)
     """
 }
 
