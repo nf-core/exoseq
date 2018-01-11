@@ -487,7 +487,7 @@ process applyBQSR {
 */ 
 process qualiMap {
     tag "${name}"
-    publishDir "${params.outdir}/qualimap", mode: 'copy'
+    publishDir "${params.outdir}/Qualimap", mode: 'copy'
     
     input:
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
@@ -503,11 +503,13 @@ process qualiMap {
     """
     qualimap bamqc $gcref \\
     -bam $realign_bam \\
-    -outdir ${name}_qualimap \\
+    -outdir ${name} \\
     --skip-duplicated \\
     --collect-overlap-pairs \\
     -nt ${task.cpus} \\
     --java-mem-size=${task.memory.toGiga()}G \\
+    # Print version number to standard out
+    echo "QualiMap version "\$(qualimap --version 2>&1)
     """
 }
 
