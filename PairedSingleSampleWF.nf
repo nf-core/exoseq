@@ -408,7 +408,7 @@ process recal_bam_files {
 
 
     input:
-    set val(name), file(markdup_bam) from samples_markdup_bam
+    set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_markdup_bam
 
     output:
     set val(name), file("${name}_table.recal") into samples_recal_reports
@@ -453,7 +453,7 @@ process applyBQSR {
     set val(name), file(markdup_bam) from samples_for_applyBQSR
 
     output:
-    set val(name), file("${name}.recal.bam") into samples_recal_bam, bam_metrics
+    set val(name), file("${name}.recal.bam"), file("${name}.recal.bai") into bam_vcall, bam_metrics
 
     script:
     if(params.exome){
