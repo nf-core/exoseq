@@ -450,7 +450,7 @@ process applyBQSR {
 
     input:
     set val(name), file("${name}_table.recal") from samples_recal_reports
-    set val(name), file(markdup_bam) from samples_for_applyBQSR
+    set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_for_applyBQSR
 
     output:
     set val(name), file("${name}.recal.bam"), file("${name}.recal.bai") into bam_vcall, bam_metrics
