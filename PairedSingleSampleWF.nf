@@ -385,7 +385,7 @@ process markDuplicates {
 
     script:
     """
-        picard MarkDuplicates \\
+        gatk MarkDuplicates \\
         INPUT=$sorted_bam \\
         OUTPUT=${name}_markdup.bam \\
         METRICS_FILE=${name}.dup_metrics \\
@@ -403,10 +403,8 @@ process markDuplicates {
         CREATE_INDEX=true \\
         MAX_RECORDS_IN_RAM=500000 \\
         CREATE_MD5_FILE=false \\
-        GA4GH_CLIENT_SECRETS=''
-
-    # Print version number to standard out
-    echo "Picard version "\$(picard  MarkDuplicates --version 2>&1)
+        GA4GH_CLIENT_SECRETS='' \\
+        --java-options -Xmx${task.memory.toGiga()}g
     """
 }
 
