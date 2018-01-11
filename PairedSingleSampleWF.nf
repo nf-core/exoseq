@@ -386,24 +386,13 @@ process markDuplicates {
     script:
     """
         gatk MarkDuplicates \\
-        INPUT=$sorted_bam \\
-        OUTPUT=${name}_markdup.bam \\
-        METRICS_FILE=${name}.dup_metrics \\
-        VALIDATION_STRINGENCY=SILENT \\
-        REMOVE_DUPLICATES=false \\
-        ASSUME_SORTED=false \\
-        MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP=50000 \\
-        MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=8000 \\
-        SORTING_COLLECTION_SIZE_RATIO=0.25 \\
-        READ_NAME_REGEX=\"[a-zA-Z0-9]+:[0-9]:([0-9]+):([0-9]+):([0-9]+).*\" \\
-        OPTICAL_DUPLICATE_PIXEL_DISTANCE=100 \\
-        VERBOSITY=INFO \\
-        QUIET=false \\
-        COMPRESSION_LEVEL=5 \\
-        CREATE_INDEX=true \\
-        MAX_RECORDS_IN_RAM=500000 \\
-        CREATE_MD5_FILE=false \\
-        GA4GH_CLIENT_SECRETS='' \\
+        --INPUT $sorted_bam \\
+        --OUTPUT ${name}_markdup.bam \\
+        --METRICS_FILE ${name}.dup_metrics \\
+        --REMOVE_DUPLICATES=false \\
+        --ASSUME_SORTED=false \\
+        --VERBOSITY=INFO \\
+        --CREATE_INDEX=true \\
         --java-options -Xmx${task.memory.toGiga()}g
     """
 }
@@ -432,7 +421,8 @@ process recal_bam_files {
     gatk BaseRecalibrator \\
         -I $markdup_bam \\
         -R $params.gfasta \\
-        -o ${name}_table.recal \\
+        --useOriginalQualities \\
+        -O ${name}_table.recal \\
         -cov ReadGroupCovariate \\
         -cov QualityScoreCovariate \\
         -cov CycleCovariate \\
@@ -441,7 +431,6 @@ process recal_bam_files {
         -L $params.target \\
         -U \\
         -OQ \\
-        --default_platform illumina \\
         --knownSites $params.dbsnp \\
         -l INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
