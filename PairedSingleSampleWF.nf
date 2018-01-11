@@ -453,7 +453,7 @@ process applyBQSR {
     set val(name), file(markdup_bam) from samples_for_applyBQSR
 
     output:
-    set val(name), file("${name}.recal.bam") into samples_recal_bam
+    set val(name), file("${name}.recal.bam") into samples_recal_bam, bam_metrics
 
     script:
     if(params.exome){
@@ -464,6 +464,7 @@ process applyBQSR {
         --bqsr-recal-file ${name}_table.recal \\
         -O ${name}.recal.bam \\
         -L $params.target \\
+        --create-output-bam-index true \\
         --java-options -Xmx${task.memory.toGiga()}g
     """
     } else {
@@ -473,6 +474,7 @@ process applyBQSR {
         -I $markdup_bam \\
         --bqsr-recal-file ${name}_table.recal \\
         -O ${name}.recal.bam \\
+        --create-output-bam-index true \\
         --java-options -Xmx${task.memory.toGiga()}g
     """    
     }
