@@ -686,7 +686,6 @@ process multiqc {
     file (fastqc:'fastqc/*') from fastqc_results.collect()
     file ('trimgalore/*') from trimgalore_results.collect()
     file ('gatk_base_recalibration/*') from gatk_base_recalibration_results.collect()
-    file ('gatk_variant_eval/*') from gatk_variant_eval_results.collect()
     file ('qualimap/*') from qualimap_results.collect()
     file ('software_versions/*') from software_versions_yaml.collect()
 
