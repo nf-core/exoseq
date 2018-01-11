@@ -535,19 +535,18 @@ process variantCall {
     gatk HaplotypeCaller \\
         -I $realign_bam \\
         -R $params.gfasta \\
-        -o ${name}_variants.vcf \\
+        -O ${name}_variants.vcf \\
         -ERC GVCF \\
         -L $params.target \\
-        --annotation HaplotypeScore \\
+        --create-output-variant-index \\
         --annotation MappingQualityRankSumTest \\
         --annotation QualByDepth \\
         --annotation ReadPosRankSumTest \\
         --annotation RMSMappingQuality \\
         --annotation FisherStrand \\
         --annotation Coverage \\
-        --standard_min_confidence_threshold_for_calling 30.0 \\
-        --dbsnp $params.dbsnp -l INFO \\
-        -variant_index_type LINEAR -variant_index_parameter 128000 \\
+        --dbsnp $params.dbsnp \\
+        --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
     """
     } else { //We have a winner (genome)
@@ -555,18 +554,17 @@ process variantCall {
     gatk HaplotypeCaller \\
         -I $realign_bam \\
         -R $params.gfasta \\
-        -o ${name}_variants.vcf \\
+        -O ${name}_variants.vcf \\
         -ERC GVCF \\
-        --annotation HaplotypeScore \\
+        --create-output-variant-index \\
         --annotation MappingQualityRankSumTest \\
         --annotation QualByDepth \\
         --annotation ReadPosRankSumTest \\
         --annotation RMSMappingQuality \\
         --annotation FisherStrand \\
         --annotation Coverage \\
-        --standard_min_confidence_threshold_for_calling 30.0 \\
-        --dbsnp $params.dbsnp -l INFO \\
-        -variant_index_type LINEAR -variant_index_parameter 128000 \\
+        --dbsnp $params.dbsnp \\
+        --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
     """    
     }
