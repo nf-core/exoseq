@@ -454,7 +454,7 @@ process applyBQSR {
     set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_for_applyBQSR
 
     output:
-    set val(name), file("${name}.recal.bam"), file("${name}.recal.bai") into bam_vcall, bam_metrics
+    set val(name), file("${name}.bam"), file("${name}.bai") into bam_vcall, bam_metrics
 
     script:
     if(params.exome){
@@ -463,7 +463,7 @@ process applyBQSR {
         -R $params.gfasta \\
         -I $markdup_bam \\
         --bqsr-recal-file ${name}_table.recal \\
-        -O ${name}.recal.bam \\
+        -O ${name}.bam \\
         -L $params.target \\
         --create-output-bam-index true \\
         --java-options -Xmx${task.memory.toGiga()}g
@@ -474,7 +474,7 @@ process applyBQSR {
         -R $params.gfasta \\
         -I $markdup_bam \\
         --bqsr-recal-file ${name}_table.recal \\
-        -O ${name}.recal.bam \\
+        -O ${name}.bam \\
         --create-output-bam-index true \\
         --java-options -Xmx${task.memory.toGiga()}g
     """    
