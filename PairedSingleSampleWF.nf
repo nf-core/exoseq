@@ -429,7 +429,7 @@ process recal_bam_files {
     script:
     if(params.exome){
     """
-    gatk -T BaseRecalibrator \\
+    gatk BaseRecalibrator \\
         -I $markdup_bam \\
         -R $params.gfasta \\
         -o ${name}_table.recal \\
@@ -443,9 +443,10 @@ process recal_bam_files {
         -OQ \\
         --default_platform illumina \\
         --knownSites $params.dbsnp \\
-        -l INFO
+        -l INFO \\
+        --java-options -Xmx${task.memory.toGiga()}g
 
-    gatk -T PrintReads \\
+    gatk PrintReads \\
         -BQSR ${name}_table.recal \\
         -I $markdup_bam \\
         -R $params.gfasta \\
@@ -454,14 +455,15 @@ process recal_bam_files {
         -nct ${task.cpus} \\
         -U \\
         -OQ \\
-        -l INFO
+        -l INFO \\
+        --java-options -Xmx${task.memory.toGiga()}g
 
     # Print version number to standard out
     echo "GATK version "\$(gatk --version 2>&1)
     """
     } else {
     """
-    gatk -T BaseRecalibrator \\
+    gatk BaseRecalibrator \\
         -I $markdup_bam \\
         -R $params.gfasta \\
         -o ${name}_table.recal \\
@@ -474,7 +476,8 @@ process recal_bam_files {
         -OQ \\
         --default_platform illumina \\
         --knownSites $params.dbsnp \\
-        -l INFO
+        -l INFO \\
+        --java-options -Xmx${task.memory.toGiga()}g
 
     gatk -T PrintReads \\
         -BQSR ${name}_table.recal \\
@@ -485,7 +488,8 @@ process recal_bam_files {
         -nct ${task.cpus} \\
         -U \\
         -OQ \\
-        -l INFO
+        -l INFO \\
+        --java-options -Xmx${task.memory.toGiga()}g
 
     # Print version number to standard out
     echo "GATK version "\$(gatk --version 2>&1)
