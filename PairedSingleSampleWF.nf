@@ -379,7 +379,7 @@ process markDuplicates {
     set val(name), file(sorted_bam) from samples_sorted_bam
 
     output:
-    set val(name), file("${name}_markdup.bam"), file("${name}_markdup.bai") into samples_markdup_bam
+    set val(name), file("${name}_markdup.bam"), file("${name}_markdup.bai") into samples_markdup_bam, samples_for_applyBQSR
     file("${name}.dup_metrics") into markdup_results
     file '.command.log' into markDuplicates_stdout
 
@@ -411,7 +411,7 @@ process recal_bam_files {
     set val(name), file(markdup_bam) from samples_markdup_bam
 
     output:
-    set val(name), file("${name}_recal.bam"), file("${name}_recal.bai") into samples_recal_bam
+    set val(name), file("${name}_table.recal") into samples_recal_reports
     file '.command.log' into gatk_stdout
     file '.command.log' into gatk_base_recalibration_results
 
@@ -419,71 +419,64 @@ process recal_bam_files {
     if(params.exome){
     """
     gatk BaseRecalibrator \\
-        -I $markdup_bam \\
         -R $params.gfasta \\
-        --useOriginalQualities \\
+        -I $markdup_bam \\
         -O ${name}_table.recal \\
-        -cov ReadGroupCovariate \\
-        -cov QualityScoreCovariate \\
-        -cov CycleCovariate \\
-        -cov ContextCovariate \\
-        -nct ${task.cpus} \\
         -L $params.target \\
-        -U \\
-        -OQ \\
-        --knownSites $params.dbsnp \\
-        -l INFO \\
+        --known-sites $params.dbsnp \\
+        --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
-
-    gatk PrintReads \\
-        -BQSR ${name}_table.recal \\
-        -I $markdup_bam \\
-        -R $params.gfasta \\
-        -o ${name}_recal.bam \\
-        -baq RECALCULATE \\
-        -nct ${task.cpus} \\
-        -U \\
-        -OQ \\
-        -l INFO \\
-        --java-options -Xmx${task.memory.toGiga()}g
-
     # Print version number to standard out
     echo "GATK version "\$(gatk --version 2>&1)
     """
     } else {
     """
     gatk BaseRecalibrator \\
-        -I $markdup_bam \\
         -R $params.gfasta \\
-        -o ${name}_table.recal \\
-        -cov ReadGroupCovariate \\
-        -cov QualityScoreCovariate \\
-        -cov CycleCovariate \\
-        -cov ContextCovariate \\
-        -nct ${task.cpus} \\
-        -U \\
-        -OQ \\
-        --default_platform illumina \\
-        --knownSites $params.dbsnp \\
-        -l INFO \\
-        --java-options -Xmx${task.memory.toGiga()}g
-
-    gatk PrintReads \\
-        -BQSR ${name}_table.recal \\
         -I $markdup_bam \\
-        -R $params.gfasta \\
-        -o ${name}_recal.bam \\
-        -baq RECALCULATE \\
-        -nct ${task.cpus} \\
-        -U \\
-        -OQ \\
-        -l INFO \\
+        -O ${name}_table.recal \\
+        --known-sites $params.dbsnp \\
+        --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
-
     # Print version number to standard out
     echo "GATK version "\$(gatk --version 2>&1)
     """    
     }
+}
+
+process applyBQSR {
+    tag "${name}"
+    publishDir "${params.outdir}/GATK_ApplyBQSR", mode: 'copy'
+
+    input:
+    set val(name), file("${name}_table.recal") from samples_recal_reports
+    set val(name), file(markdup_bam) from samples_for_applyBQSR
+
+    output:
+    set val(name), file("${name}.recal.bam") into samples_recal_bam
+
+    script:
+    if(params.exome){
+    """
+    gatk ApplyBQSR \\
+        -R $params.gfasta \\
+        -I $markdup_bam \\
+        --bqsr-recal-file ${name}_table.recal \\
+        -O ${name}.recal.bam \\
+        -L $params.target \\
+        --java-options -Xmx${task.memory.toGiga()}g
+    """
+    } else {
+    """
+    gatk ApplyBQSR \\
+        -R $params.gfasta \\
+        -I $markdup_bam \\
+        --bqsr-recal-file ${name}_table.recal \\
+        -O ${name}.recal.bam \\
+        --java-options -Xmx${task.memory.toGiga()}g
+    """    
+    }
+
 }
 
 
