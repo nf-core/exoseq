@@ -428,7 +428,7 @@ process recal_bam_files {
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
     # Print version number to standard out
-    echo "GATK version "\$(gatk --version 2>&1)
+    echo "GATK version "\$(gatk BaseRecalibrator --version 2>&1)
     """
     } else {
     """
@@ -602,7 +602,7 @@ process get_software_versions {
     software_versions['FastQC'] = fastqc[0].getText().find(/FastQC v(\S+)/) { match, version -> "v$version"}
     software_versions['Trim Galore!'] = trim_galore[0].getText().find(/Trim Galore version: (\S+)/) {match, version -> "v$version"}
     software_versions['BWA'] = bwa[0].getText().find(/Version: (\S+)/) {match, version -> "v$version"}
-    software_versions['GATK'] = gatk[0].getText().find(/GATK version ([\d\.]+)/) {match, version -> "v$version"} 
+    software_versions['GATK'] = gatk[0].getText().find(/Version:([\d\.]+)/) {match, version -> "v$version"} 
     software_versions['QualiMap'] = qualimap[0].getText().find(/QualiMap v.(\S+)/) {match, version -> "v$version"}
 
     def sw_yaml_file = task.workDir.resolve('software_versions_mqc.yaml')
