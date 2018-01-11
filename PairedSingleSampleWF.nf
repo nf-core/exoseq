@@ -500,12 +500,15 @@ process qualiMap {
     gcref = ''
     if(params.genome == 'GRCh37') gcref = '-gd HUMAN'
     if(params.genome == 'GRCm38') gcref = '-gd MOUSE'
+    listsites = ''
+    if(params.exome) listsites ="-gff ${params.target_bed}"
     """
     qualimap bamqc $gcref \\
     -bam $realign_bam \\
     -outdir ${name}_qualimap \\
     --skip-duplicated \\
     --collect-overlap-pairs \\
+    $listsites \\
     -nt ${task.cpus} \\
     --java-mem-size=${task.memory.toGiga()}G \\
 
