@@ -479,41 +479,6 @@ process applyBQSR {
 
 }
 
-
-/*
- * Step 6 - Realign BAM file around indels
- * 
-*/ process realign {
-    tag "${name}"
-    publishDir "${params.outdir}/GATK_IndelRealigner", mode: 'copy',
-        saveAs: {filename -> filename.replaceFirst(/realign/, "sorted_dupmarked_recalibrated_realigned")}
-
-    input:
-    set val(name), file(recal_bam), file(recal_bam_ind) from samples_recal_bam
-
-    output:
-    set val(name), file("${name}_realign.bam"), file("${name}_realign.bai") into (bam_vcall, bam_metrics)
-
-    script:
-    """
-    gatk RealignerTargetCreator \\
-        -I $recal_bam \\
-        -R $params.gfasta \\
-        -o ${name}_realign.intervals \\
-        --known $params.dbsnp \\
-        -l INFO \\
-        --java-options -Xmx${task.memory.toGiga()}g
-
-    gatk IndelRealigner \\
-        -I $recal_bam \\
-        -R $params.gfasta \\
-        -targetIntervals ${name}_realign.intervals \\
-        -o ${name}_realign.bam \\
-        -l INFO \\
-        --java-options -Xmx${task.memory.toGiga()}g
-    """
-}
-
 /*
  * Step 7 - Determine quality metrics of mapped BAM files using QualiMap 2
  * 
