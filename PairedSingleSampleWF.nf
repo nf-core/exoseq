@@ -266,6 +266,7 @@ process fastqc {
     script:
     """
     fastqc -q $reads
+    fastqc --version
     """
 }
 
@@ -439,7 +440,7 @@ process recal_bam_files {
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
     # Print version number to standard out
-    echo "GATK version "\$(gatk --version 2>&1)
+    echo "GATK version "\$(gatk BaseRecalibrator --version 2>&1)
     """    
     }
 }
@@ -574,8 +575,8 @@ process variantCall {
  * 
 */
 software_versions = [
-  'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'Picard MarkDuplicates': null, 'GATK': null,
-  'SNPEff': null, 'QualiMap': null, 'Nextflow': "v$workflow.nextflow.version"
+  'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'GATK': null,
+  'QualiMap': null, 'Nextflow': "v$workflow.nextflow.version"
 ]
 
 /*
