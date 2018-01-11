@@ -479,7 +479,7 @@ process recal_bam_files {
         -l INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
 
-    gatk -T PrintReads \\
+    gatk PrintReads \\
         -BQSR ${name}_table.recal \\
         -I $markdup_bam \\
         -R $params.gfasta \\
@@ -514,19 +514,21 @@ process recal_bam_files {
 
     script:
     """
-    gatk -T RealignerTargetCreator \\
+    gatk RealignerTargetCreator \\
         -I $recal_bam \\
         -R $params.gfasta \\
         -o ${name}_realign.intervals \\
         --known $params.dbsnp \\
-        -l INFO
+        -l INFO \\
+        --java-options -Xmx${task.memory.toGiga()}g
 
-    gatk -T IndelRealigner \\
+    gatk IndelRealigner \\
         -I $recal_bam \\
         -R $params.gfasta \\
         -targetIntervals ${name}_realign.intervals \\
         -o ${name}_realign.bam \\
-        -l INFO
+        -l INFO \\
+        --java-options -Xmx${task.memory.toGiga()}g
     """
 }
 
@@ -581,7 +583,7 @@ process variantCall {
     script:
     if(params.exome){
     """
-    gatk -T HaplotypeCaller \\
+    gatk HaplotypeCaller \\
         -I $realign_bam \\
         -R $params.gfasta \\
         -o ${name}_variants.vcf \\
@@ -596,11 +598,12 @@ process variantCall {
         --annotation Coverage \\
         --standard_min_confidence_threshold_for_calling 30.0 \\
         --dbsnp $params.dbsnp -l INFO \\
-        -variant_index_type LINEAR -variant_index_parameter 128000
+        -variant_index_type LINEAR -variant_index_parameter 128000 \\
+        --java-options -Xmx${task.memory.toGiga()}g
     """
     } else { //We have a winner (genome)
     """
-    gatk -T HaplotypeCaller \\
+    gatk HaplotypeCaller \\
         -I $realign_bam \\
         -R $params.gfasta \\
         -o ${name}_variants.vcf \\
@@ -614,7 +617,8 @@ process variantCall {
         --annotation Coverage \\
         --standard_min_confidence_threshold_for_calling 30.0 \\
         --dbsnp $params.dbsnp -l INFO \\
-        -variant_index_type LINEAR -variant_index_parameter 128000
+        -variant_index_type LINEAR -variant_index_parameter 128000 \\
+        --java-options -Xmx${task.memory.toGiga()}g
     """    
     }
 }
@@ -641,7 +645,6 @@ process get_software_versions {
     val fastqc from fastqc_stdout.collect()
     val trim_galore from trimgalore_logs.collect()
     val bwa from bwa_stdout.collect()
-    val markDuplicates from markDuplicates_stdout.collect()
     val gatk from gatk_stdout.collect()
     val qualimap from qualimap_stdout.collect()
 
@@ -652,7 +655,6 @@ process get_software_versions {
     software_versions['FastQC'] = fastqc[0].getText().find(/FastQC v(\S+)/) { match, version -> "v$version"}
     software_versions['Trim Galore!'] = trim_galore[0].getText().find(/Trim Galore version: (\S+)/) {match, version -> "v$version"}
     software_versions['BWA'] = bwa[0].getText().find(/Version: (\S+)/) {match, version -> "v$version"}
-    software_versions['Picard MarkDuplicates'] = markDuplicates[0].getText().find(/Picard version ([\d\.]+)/) {match, version -> "v$version"}
     software_versions['GATK'] = gatk[0].getText().find(/GATK version ([\d\.]+)/) {match, version -> "v$version"} 
     software_versions['QualiMap'] = qualimap[0].getText().find(/QualiMap v.(\S+)/) {match, version -> "v$version"}
 
@@ -683,7 +685,6 @@ process multiqc {
     file multiqc_config
     file (fastqc:'fastqc/*') from fastqc_results.collect()
     file ('trimgalore/*') from trimgalore_results.collect()
-    file ('picard/*') from markdup_results.collect()
     file ('gatk_base_recalibration/*') from gatk_base_recalibration_results.collect()
     file ('gatk_variant_eval/*') from gatk_variant_eval_results.collect()
     file ('qualimap/*') from qualimap_results.collect()
