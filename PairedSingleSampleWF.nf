@@ -354,7 +354,7 @@ process sortSam {
     
 
     output: 
-    set val(name), file("${raw_sam}.sorted.bam") into samples_sorted_bam, samples_for_applyBQSR
+    set val(name), file("${raw_sam}.sorted.bam") into samples_sorted_bam
 
     script:
     def avail_mem = task.memory ? "-m ${task.memory.toBytes().intdiv(task.cpus)}" : ''
