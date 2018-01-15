@@ -371,6 +371,10 @@ process sortSam {
 *  STEP 4 - Mark PCR duplicates in sorted BAM file
 */ 
 
+/*
+*  STEP 4 - Mark PCR duplicates in sorted BAM file
+*/ 
+
 process markDuplicates {
     tag "${name}"
     publishDir "${params.outdir}/Picard_Markduplicates/metrics", mode: 'copy',
@@ -386,17 +390,31 @@ process markDuplicates {
 
     script:
     """
-        gatk MarkDuplicates \\
-        --INPUT $sorted_bam \\
-        --OUTPUT ${name}_markdup.bam \\
-        --METRICS_FILE ${name}.dup_metrics \\
-        --REMOVE_DUPLICATES=false \\
-        --ASSUME_SORTED=false \\
-        --VERBOSITY=INFO \\
-        --CREATE_INDEX=true \\
-        --java-options -Xmx${task.memory.toGiga()}g
+        picard MarkDuplicates \\
+        INPUT=$sorted_bam \\
+        OUTPUT=${name}_markdup.bam \\
+        METRICS_FILE=${name}.dup_metrics \\
+        VALIDATION_STRINGENCY=SILENT \\
+        REMOVE_DUPLICATES=false \\
+        ASSUME_SORTED=false \\
+        MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP=50000 \\
+        MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=8000 \\
+        SORTING_COLLECTION_SIZE_RATIO=0.25 \\
+        READ_NAME_REGEX=\"[a-zA-Z0-9]+:[0-9]:([0-9]+):([0-9]+):([0-9]+).*\" \\
+        OPTICAL_DUPLICATE_PIXEL_DISTANCE=100 \\
+        VERBOSITY=INFO \\
+        QUIET=false \\
+        COMPRESSION_LEVEL=5 \\
+        CREATE_INDEX=true \\
+        MAX_RECORDS_IN_RAM=500000 \\
+        CREATE_MD5_FILE=false \\
+        GA4GH_CLIENT_SECRETS=''
+    # Print version number to standard out
+    echo "Picard version "\$(picard  MarkDuplicates --version 2>&1)
     """
 }
+
+
 
 
 /*
