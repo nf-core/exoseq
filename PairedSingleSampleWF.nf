@@ -102,7 +102,6 @@ params.mills = params.metaFiles[ params.genome ] ? params.metaFiles[ params.geno
 params.omni = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].omni ?: false : false
 params.gfasta = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].gfasta ?: false : false
 params.bwa_index = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].bwa_index ?: false : false
-params.multiqc_config = "$baseDir/conf/multiqc_config.yaml"
 
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
@@ -147,9 +146,6 @@ if(params.aligner == 'bwa' ){
         .ifEmpty { exit 1, "BWA index not found: ${params.gfasta}.bwt" }
 }
 
-// Set up input channels for certain files (if required)
-
-multiqc_config = file(params.multiqc_config)
 
 // Create a summary for the logfile
 def summary = [:]
@@ -593,7 +589,7 @@ process variantCall {
  * 
 */
 software_versions = [
-  'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'GATK': null,
+  'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'GATK': null, 'Picard': null,
   'QualiMap': null, 'Nextflow': "v$workflow.nextflow.version"
 ]
 
@@ -612,6 +608,7 @@ process get_software_versions {
     val bwa from bwa_stdout.collect()
     val gatk from gatk_stdout.collect()
     val qualimap from qualimap_stdout.collect()
+    val markDuplicates from markDuplicates_stdout.collect()
 
     output:
     file 'software_versions_mqc.yaml' into software_versions_yaml
@@ -620,6 +617,7 @@ process get_software_versions {
     software_versions['FastQC'] = fastqc[0].getText().find(/FastQC v(\S+)/) { match, version -> "v$version"}
     software_versions['Trim Galore!'] = trim_galore[0].getText().find(/Trim Galore version: (\S+)/) {match, version -> "v$version"}
     software_versions['BWA'] = bwa[0].getText().find(/Version: (\S+)/) {match, version -> "v$version"}
+    software_versions['Picard'] = markDuplicates[0].getText().find(/Picard version ([\d\.]+)/) {match, version -> "v$version"}    
     software_versions['GATK'] = gatk[0].getText().find(/Version:([\d\.]+)/) {match, version -> "v$version"} 
     software_versions['QualiMap'] = qualimap[0].getText().find(/QualiMap v.(\S+)/) {match, version -> "v$version"}
 
@@ -637,9 +635,48 @@ ${software_versions.collect{ k,v -> "            <dt>$k</dt><dd>${v ?: '<span st
     """.stripIndent()
 }
 
+/**
+* Step 11 - Generate MultiQC config file
+*
+*/ 
+
+process GenerateMultiQCconfig {
+  publishDir "${params.outdir}/MultiQC/", mode: 'copy'
+
+  input:
+
+  output:
+  file("multiqc_config.yaml") into multiQCconfig
+
+  script:
+  """
+  touch multiqc_config.yaml
+  echo "custom_logo_title: 'Exome Analysis Workflow'" >> multiqc_config.yaml
+  echo "extra_fn_clean_exts:" >> multiqc_config.yaml
+  echo "- _R1" >> multiqc_config.yaml
+  echo "- _R2" >> multiqc_config.yaml
+  echo "report_header_info:" >> multiqc_config.yaml
+  echo "- Exoseq version: ${version}" >> multiqc_config.yaml
+  echo "- Command Line: ${workflow.commandLine}" >> multiqc_config.yaml
+  echo "- Directory: ${workflow.launchDir}" >> multiqc_config.yaml
+  echo "- Genome: "${params.gfasta} >> multiqc_config.yaml
+  echo "  dbSNP : ${params.dbsnp}" >> multiqc_config.yaml
+  echo "  Omni: ${params.omni}" >> multiqc_config.yaml
+  echo "  Mills: ${params.mills}" >> multiqc_config.yaml
+  echo "top_modules:" >> multiqc_config.yaml
+  echo "- 'fastqc'" >> multiqc_config.yaml
+  echo "- 'cutadapt'" >> multiqc_config.yaml
+  echo "- 'picard'" >> multiqc_config.yaml
+  echo "- 'bwa'" >> multiqc_config.yaml
+  echo "- 'samtools'" >> multiqc_config.yaml
+  echo "- 'qualimap'" >> multiqc_config.yaml
+  echo "- 'gatk'" >> multiqc_config.yaml
+  """
+}
+
 
 /*
-* Step 11 - Collect metrics, stats and other resources with MultiQC in a single call
+* Step 12 - Collect metrics, stats and other resources with MultiQC in a single call
 */ 
 
 process multiqc {
@@ -647,7 +684,7 @@ process multiqc {
     publishDir "${params.outdir}/MultiQC", mode: 'copy'
 
     input:
-    file multiqc_config
+    file multiQCconfig
     file (fastqc:'fastqc/*') from fastqc_results.collect()
     file ('trimgalore/*') from trimgalore_results.collect()
     file ('gatk_base_recalibration/*') from gatk_base_recalibration_results.collect()
@@ -663,9 +700,10 @@ process multiqc {
 
     script:
     prefix = fastqc[0].toString() - '_fastqc.html' - 'fastqc/'
+    rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
+    rfilename = custom_runName ? "--filename " + custom_runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
     """
-    multiqc -f . 2>&1
+    multiqc -f $rtitle $rfilename --config $multiQCconfig . 
     """
-
 }
 
