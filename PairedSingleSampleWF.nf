@@ -274,6 +274,7 @@ process fastqc {
 if(params.notrim){
     trimmed_reads = read_files_trimming
     trimgalore_results = []
+    trimgalore_logs = []
 } else {
     process trim_galore {
         tag "$name"
@@ -283,7 +284,7 @@ if(params.notrim){
         set val(name), file(reads) from read_files_trimming
 
         output:
-        set val(name), file('*fq.gz') into trimmed_reads
+        set val(name), file(reads) into trimmed_reads
         file '*trimming_report.txt' into trimgalore_results, trimgalore_logs
 
         script:
