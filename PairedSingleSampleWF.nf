@@ -238,7 +238,7 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         """
     }
 } else {
-    bwa_index = Channel.fromPath("${params.bwa_index}")
+    bwa_index = file("${params.bwa_index}")
 }
 
 
