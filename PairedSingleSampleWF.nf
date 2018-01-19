@@ -387,27 +387,12 @@ process markDuplicates {
 
     script:
     """
-        picard MarkDuplicates \\
-        INPUT=$sorted_bam \\
-        OUTPUT=${name}_markdup.bam \\
-        METRICS_FILE=${name}.dup_metrics \\
-        VALIDATION_STRINGENCY=SILENT \\
-        REMOVE_DUPLICATES=false \\
-        ASSUME_SORTED=false \\
-        MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP=50000 \\
-        MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=8000 \\
-        SORTING_COLLECTION_SIZE_RATIO=0.25 \\
-        READ_NAME_REGEX=\"[a-zA-Z0-9]+:[0-9]:([0-9]+):([0-9]+):([0-9]+).*\" \\
-        OPTICAL_DUPLICATE_PIXEL_DISTANCE=100 \\
-        VERBOSITY=INFO \\
-        QUIET=false \\
-        COMPRESSION_LEVEL=5 \\
-        CREATE_INDEX=true \\
-        MAX_RECORDS_IN_RAM=500000 \\
-        CREATE_MD5_FILE=false \\
-        GA4GH_CLIENT_SECRETS=''
-    # Print version number to standard out
-    echo "Picard version "\$(picard  MarkDuplicates --version 2>&1)
+        gatk MarkDuplicates \\
+        --INPUT $sorted_bam \\
+        --OUTPUT ${name}_markdup.bam \\
+        --METRICS_FILE ${name}.dup_metrics \\
+        --REMOVE_DUPLICATES false \\
+        --CREATE_INDEX true \\
     """
 }
 
@@ -590,7 +575,7 @@ process variantCall {
  * 
 */
 software_versions = [
-  'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'GATK': null, 'Picard': null,
+  'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'GATK': null,
   'QualiMap': null, 'Nextflow': "v$workflow.nextflow.version"
 ]
 
@@ -609,7 +594,6 @@ process get_software_versions {
     val bwa from bwa_stdout.collect()
     val gatk from gatk_stdout.collect()
     val qualimap from qualimap_stdout.collect()
-    val markDuplicates from markDuplicates_stdout.collect()
 
     output:
     file 'software_versions_mqc.yaml' into software_versions_yaml
@@ -618,7 +602,6 @@ process get_software_versions {
     software_versions['FastQC'] = fastqc[0].getText().find(/FastQC v(\S+)/) { match, version -> "v$version"}
     software_versions['Trim Galore!'] = trim_galore[0].getText().find(/Trim Galore version: (\S+)/) {match, version -> "v$version"}
     software_versions['BWA'] = bwa[0].getText().find(/Version: (\S+)/) {match, version -> "v$version"}
-    software_versions['Picard'] = markDuplicates[0].getText().find(/Picard version ([\d\.]+)/) {match, version -> "v$version"}    
     software_versions['GATK'] = gatk[0].getText().find(/Version:([\d\.]+)/) {match, version -> "v$version"} 
     software_versions['QualiMap'] = qualimap[0].getText().find(/QualiMap v.(\S+)/) {match, version -> "v$version"}
 
@@ -667,7 +650,6 @@ process GenerateMultiQCconfig {
   echo "top_modules:" >> multiqc_config.yaml
   echo "- 'fastqc'" >> multiqc_config.yaml
   echo "- 'cutadapt'" >> multiqc_config.yaml
-  echo "- 'picard'" >> multiqc_config.yaml
   echo "- 'bwa'" >> multiqc_config.yaml
   echo "- 'samtools'" >> multiqc_config.yaml
   echo "- 'qualimap'" >> multiqc_config.yaml
@@ -689,6 +671,7 @@ process multiqc {
     file (fastqc:'fastqc/*') from fastqc_results.collect()
     file ('trimgalore/*') from trimgalore_results.collect()
     file ('gatk_base_recalibration/T*') from gatk_base_recalibration_results.collect()
+    file ('gatk_picard_duplicates/*') from markdup_results.collect()
     file ('qualimap/*') from qualimap_results.collect()
     file ('software_versions/*') from software_versions_yaml.collect()
 
