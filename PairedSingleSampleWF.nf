@@ -501,8 +501,10 @@ process qualiMap {
 
     script:
     gcref = ''
+    gff = ''
     if(params.genome == 'GRCh37') gcref = '-gd HUMAN'
     if(params.genome == 'GRCm38') gcref = '-gd MOUSE'
+    if(params.exome) gff ="-gff ${params.target_bed}"
     """
     qualimap bamqc $gcref \\
     -bam $realign_bam \\
@@ -510,6 +512,7 @@ process qualiMap {
     --skip-duplicated \\
     --collect-overlap-pairs \\
     -nt ${task.cpus} \\
+    $gff \\
     --java-mem-size=${task.memory.toGiga()}G \\
     # Print version number to standard out
     echo "QualiMap version "\$(qualimap --version 2>&1)
