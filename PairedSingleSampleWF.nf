@@ -352,6 +352,8 @@ process sortSam {
 
     output: 
     set val(name), file("${raw_sam}.sorted.bam") into samples_sorted_bam
+    file '.command.log' into samtools_stdout
+
 
     script:
     def avail_mem = task.memory ? "-m ${task.memory.toBytes().intdiv(task.cpus)}" : ''
@@ -361,12 +363,11 @@ process sortSam {
         -@ ${task.cpus}\\
         $avail_mem \\
         -o ${raw_sam}.sorted.bam
+    # Print version number to standard out
+    echo "Samtools V:"\$(samtools 2>&1)
     """
 }
 
-/*
-*  STEP 4 - Mark PCR duplicates in sorted BAM file
-*/ 
 
 /*
 *  STEP 4 - Mark PCR duplicates in sorted BAM file
@@ -576,7 +577,7 @@ process variantCall {
  * 
 */
 software_versions = [
-  'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'GATK': null,
+  'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'GATK': null, 'Samtools': null,
   'QualiMap': null, 'Nextflow': "v$workflow.nextflow.version"
 ]
 
@@ -594,6 +595,7 @@ process get_software_versions {
     val trim_galore from trimgalore_logs.collect()
     val bwa from bwa_stdout.collect()
     val gatk from gatk_stdout.collect()
+    val samtools from samtools_stdout.collect()
     val qualimap from qualimap_stdout.collect()
 
     output:
@@ -604,6 +606,7 @@ process get_software_versions {
     software_versions['Trim Galore!'] = trim_galore[0].getText().find(/Trim Galore version: (\S+)/) {match, version -> "v$version"}
     software_versions['BWA'] = bwa[0].getText().find(/Version: (\S+)/) {match, version -> "v$version"}
     software_versions['GATK'] = gatk[0].getText().find(/Version:([\d\.]+)/) {match, version -> "v$version"} 
+    software_versions['Samtools'] = samtools[0].getText().find(/Version: ([\d\.]+)/) {match, version -> "v$version"}
     software_versions['QualiMap'] = qualimap[0].getText().find(/QualiMap v.(\S+)/) {match, version -> "v$version"}
 
     def sw_yaml_file = task.workDir.resolve('software_versions_mqc.yaml')
