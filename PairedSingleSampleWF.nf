@@ -13,6 +13,9 @@ vim: syntax=groovy
  Phil Ewels @ewels <phil.ewels@scilifelab.se>
  Alex Peltzer @alex_peltzer <alexander.peltzer@qbic.uni-tuebingen.de>
  Marie Gauder <marie.gauder@student.uni-tuebingen.de>
+
+ Some code parts were lent from other NGI-Pipelines (e.g. CAW), specifically the error
+ handling, logging messages. Thanks for that @CAW guys.
 ----------------------------------------------------------------------------------------
 Developed based on GATK's best practise, takes set of FASTQ files and performs:
  - alignment (BWA)
@@ -696,5 +699,65 @@ process multiqc {
     """
     multiqc -f $rtitle $rfilename --config $multiQCconfig . 
     """
+}
+
+
+/*
+================================================================================
+=                               F U N C T I O N S                              =
+================================================================================
+*/
+
+def exoMessage() {
+  // Display NGI-ExoSeq message
+  log.info "NGI-ExoSeq ANALYSIS WORKFLOW ~ ${version} - " + this.grabRevision() + (workflow.commitId ? " [${workflow.commitId}]" : "")
+}
+
+def grabRevision() {
+  // Return the same string executed from github or not
+  return workflow.revision ?: workflow.commitId ?: workflow.scriptId.substring(0,10)
+}
+
+def minimalInformationMessage() {
+  // Minimal information message
+  log.info "Command Line: " + workflow.commandLine
+  log.info "Project Dir : " + workflow.projectDir
+  log.info "Launch Dir  : " + workflow.launchDir
+  log.info "Work Dir    : " + workflow.workDir
+  log.info "Out Dir     : " + params.outdir
+  log.info "Genome      : " + params.gfasta
+}
+
+def nextflowMessage() {
+  // Nextflow message (version + build)
+  log.info "N E X T F L O W  ~  version ${workflow.nextflow.version} ${workflow.nextflow.build}"
+}
+
+def versionMessage() {
+  // Display version message
+  log.info "NGI-ExoSeq ANALYSIS WORKFLOW"
+  log.info "  version   : " + version
+  log.info workflow.commitId ? "Git info    : ${workflow.repository} - ${workflow.revision} [${workflow.commitId}]" : "  revision  : " + this.grabRevision()
+}
+
+
+workflow.onComplete {
+  // Display complete message
+  this.nextflowMessage()
+  this.exoMessage()
+  this.minimalInformationMessage()
+  log.info "Completed at: " + workflow.complete
+  log.info "Duration    : " + workflow.duration
+  log.info "Success     : " + workflow.success
+  log.info "Exit status : " + workflow.exitStatus
+  log.info "Error report: " + (workflow.errorReport ?: '-')
+}
+
+workflow.onError {
+  // Display error message
+  this.nextflowMessage()
+  this.exoMessage()
+  log.info "Workflow execution stopped with the following message:"
+  log.info "  " + workflow.errorMessage
 }
 
