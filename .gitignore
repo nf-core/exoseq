@@ -9,6 +9,6 @@ test/
 .runTest.sh.swp
 runTest.sh
 NGI-ExoSeq_TestReport.html*
-*.dot
+*.dot*
 *.png
 *.svg
