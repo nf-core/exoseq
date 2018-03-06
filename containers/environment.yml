@@ -1,4 +1,4 @@
-name: exoseq
+name: nfcore-exoseq
 dependencies:
   - bwa=0.7.17
   - fastqc=0.11.5
