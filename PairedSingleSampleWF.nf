@@ -331,7 +331,6 @@ process bwamem {
     bwa mem \\
     -R $rg \\
     -t ${task.cpus} \\
-    -k 2 \\
     $params.gfasta \\
     $reads \\
     > ${name}_bwa.sam
