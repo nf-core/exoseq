@@ -25,13 +25,10 @@ Developed based on GATK's best practise, takes set of FASTQ files and performs:
  - variant evaluation (SnpEff)
 */
 
-// Package version
-version = '0.8.1'
-
 // Help message
 helpMessage = """
 ===============================================================================
-NGI-ExoSeq : Exome/Targeted sequence capture best practice analysis v${version}
+NGI-ExoSeq : Exome/Targeted sequence capture best practice analysis v${params.version}
 ===============================================================================
 
 Usage: nextflow SciLifeLab/NGI-ExoSeq --reads '*_R{1,2}.fastq.gz' --genome GRCh37
@@ -66,7 +63,7 @@ Other options:
 --project                      Uppnex project to user for SLURM executor
 
 For more detailed information regarding the parameters and usage refer to package
-documentation at https:// github.com/scilifelab/NGI-ExoSeq
+documentation at https://github.com/scilifelab/NGI-ExoSeq
 """
 
 // Variables and defaults
@@ -184,15 +181,13 @@ log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
 log.info "========================================="
 
 
-// Nextflow version check
-nf_required_version = '0.25.0'
 try {
-    if( ! workflow.nextflow.version.matches(">= $nf_required_version") ){
+    if( ! workflow.nextflow.version.matches(">= $params.nf_required_version") ){
         throw GroovyException('Nextflow version too old')
         }
 } catch (all) {
     log.error "====================================================\n" +
-              "  Nextflow version $nf_required_version required! You are running v$workflow.nextflow.version.\n" +
+              "  Nextflow version $params.nf_required_version required! You are running v$workflow.nextflow.version.\n" +
               "  Pipeline execution will continue, but things may break.\n" +
               "  Please run `nextflow self-update` to update Nextflow.\n" +
               "============================================================"
@@ -649,7 +644,7 @@ process GenerateMultiQCconfig {
   echo "- _R1" >> multiqc_config.yaml
   echo "- _R2" >> multiqc_config.yaml
   echo "report_header_info:" >> multiqc_config.yaml
-  echo "- Exoseq version: ${version}" >> multiqc_config.yaml
+  echo "- Exoseq version: ${params.version}" >> multiqc_config.yaml
   echo "- Command Line: ${workflow.commandLine}" >> multiqc_config.yaml
   echo "- Directory: ${workflow.launchDir}" >> multiqc_config.yaml
   echo "- Genome: "${params.gfasta} >> multiqc_config.yaml
