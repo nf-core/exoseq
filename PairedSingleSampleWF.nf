@@ -704,7 +704,7 @@ process multiqc {
 
 def exoMessage() {
   // Display NGI-ExoSeq message
-  log.info "NGI-ExoSeq ANALYSIS WORKFLOW ~ ${version} - " + this.grabRevision() + (workflow.commitId ? " [${workflow.commitId}]" : "")
+  log.info "NGI-ExoSeq ANALYSIS WORKFLOW ~ ${params.version} - " + this.grabRevision() + (workflow.commitId ? " [${workflow.commitId}]" : "")
 }
 
 def grabRevision() {
