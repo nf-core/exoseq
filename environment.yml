@@ -1,5 +1,6 @@
 name: nfcore-exoseq
 dependencies:
+  - conda-forge::openjdk # Needed for FastQC docker - see bioconda/bioconda-recipes#5026
   - bwa=0.7.17
   - fastqc=0.11.5
   - trim-galore=0.4.5
