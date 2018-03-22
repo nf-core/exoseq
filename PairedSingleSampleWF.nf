@@ -386,12 +386,13 @@ process markDuplicates {
     script:
     """
         gatk-launch MarkDuplicates \\
+        -Djava.io.tmpdir=`pwd`/tmp \\
         --INPUT $sorted_bam \\
         --OUTPUT ${name}_markdup.bam \\
         --METRICS_FILE ${name}.dup_metrics \\
         --REMOVE_DUPLICATES false \\
         --CREATE_INDEX true \\
-        --java-options -Xmx${task.memory.toGiga()}g -java.io.tmpdir=`pwd`/tmp
+        --java-options -Xmx${task.memory.toGiga()}g
     """
 }
 
