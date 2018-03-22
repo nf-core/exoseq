@@ -391,7 +391,7 @@ process markDuplicates {
         --METRICS_FILE ${name}.dup_metrics \\
         --REMOVE_DUPLICATES false \\
         --CREATE_INDEX true \\
-        --java-options -Xmx${task.memory.toGiga()}g -Djava.io.tmpdir=`pwd`/tmp
+        --java-options -Xmx${task.memory.toGiga()}g -java.io.tmpdir=`pwd`/tmp
     """
 }
 
