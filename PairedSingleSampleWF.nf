@@ -387,7 +387,6 @@ process markDuplicates {
     """
         mkdir `pwd`/tmp
         gatk-launch MarkDuplicates \\
-        -Djava.io.tmpdir=`pwd`/tmp \\
         --INPUT $sorted_bam \\
         --OUTPUT ${name}_markdup.bam \\
         --METRICS_FILE ${name}.dup_metrics \\
