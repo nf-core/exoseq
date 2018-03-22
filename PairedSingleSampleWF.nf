@@ -385,7 +385,7 @@ process markDuplicates {
 
     script:
     """
-        gatk MarkDuplicates \\
+        gatk-launch MarkDuplicates \\
         --INPUT $sorted_bam \\
         --OUTPUT ${name}_markdup.bam \\
         --METRICS_FILE ${name}.dup_metrics \\
@@ -418,7 +418,7 @@ process recal_bam_files {
     script:
     if(params.exome){
     """
-    gatk BaseRecalibrator \\
+    gatk-launch BaseRecalibrator \\
         -R $params.gfasta \\
         -I $markdup_bam \\
         -O ${name}_table.recal \\
@@ -431,7 +431,7 @@ process recal_bam_files {
     """
     } else {
     """
-    gatk BaseRecalibrator \\
+    gatk-launch BaseRecalibrator \\
         -R $params.gfasta \\
         -I $markdup_bam \\
         -O ${name}_table.recal \\
@@ -458,7 +458,7 @@ process applyBQSR {
     script:
     if(params.exome){
     """
-    gatk ApplyBQSR \\
+    gatk-launch ApplyBQSR \\
         -R $params.gfasta \\
         -I $markdup_bam \\
         --bqsr-recal-file ${name}_table.recal \\
@@ -469,7 +469,7 @@ process applyBQSR {
     """
     } else {
     """
-    gatk ApplyBQSR \\
+    gatk-launch ApplyBQSR \\
         -R $params.gfasta \\
         -I $markdup_bam \\
         --bqsr-recal-file ${name}_table.recal \\
@@ -534,7 +534,7 @@ process variantCall {
     script:
     if(params.exome){
     """
-    gatk HaplotypeCaller \\
+    gatk-launch HaplotypeCaller \\
         -I $realign_bam \\
         -R $params.gfasta \\
         -O ${name}_variants.vcf \\
@@ -553,7 +553,7 @@ process variantCall {
     """
     } else { //We have a winner (genome)
     """
-    gatk HaplotypeCaller \\
+    gatk-launch HaplotypeCaller \\
         -I $realign_bam \\
         -R $params.gfasta \\
         -O ${name}_variants.vcf \\
