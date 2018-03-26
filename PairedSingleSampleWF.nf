@@ -353,12 +353,12 @@ process sortSam {
 
 
     script:
-    def avail_mem = task.memory ? "-m ${task.memory.toBytes().intdiv(task.cpus)}" : ''
+    def avail_mem = task.memory ? "-m ${task.memory.toMegaBytes().intdiv(task.cpus)}" : ''
     """
     samtools sort \\
         $raw_sam \\
         -@ ${task.cpus}\\
-        $avail_mem \\
+        ${avail_mem}M \\
         -o ${raw_sam}.sorted.bam
     # Print version number to standard out
     echo "Samtools V:"\$(samtools 2>&1)
