@@ -353,7 +353,7 @@ process sortSam {
 
 
     script:
-    def avail_mem = task.memory ? "-m ${task.memory.toMegaBytes().intdiv(task.cpus)}" : ''
+    def avail_mem = task.memory ? "-m ${task.memory.toMega().intdiv(task.cpus)}" : ''
     """
     samtools sort \\
         $raw_sam \\
