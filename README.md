@@ -1,8 +1,8 @@
-# ![NGI-ExoSeq](https://raw.githubusercontent.com/SciLifeLab/NGI-ExoSeq/master/docs/images/NGI-ExoSeq_logo.png)
+# ![nf-core/ExoSeq](https://raw.githubusercontent.com/nf-core/Exoseq/master/docs/images/ExoSeq_Logo.png)
 
 ## Introduction
 
-NGI-ExoSeq is a bioinformatics package that performs best-practice analysis pipeline for Exome Sequencing data at the [National Genomics Infastructure](https://ngisweden.scilifelab.se/)
+ExoSeq is a bioinformatics package that performs best-practice analysis pipeline for Exome Sequencing data at the [National Genomics Infastructure](https://ngisweden.scilifelab.se/)
 at [SciLifeLab Stockholm](https://www.scilifelab.se/platforms/ngi/), Sweden.
 
 The pipeline is built based on [GATK](https://software.broadinstitute.org/gatk/best-practices/) best practices using [Nextflow](https://www.nextflow.io), a bioinformatics workflow tool. The main steps done by pipeline are the following (more information about the processes can be found [here](docs/processes.md)).
@@ -17,7 +17,7 @@ The pipeline is built based on [GATK](https://software.broadinstitute.org/gatk/b
 * Variant Annotation
 
 ## Documentation
-The NGI-ExoSeq pipeline comes with documentation about the pipeline, found in the `docs/` directory:
+The nfcore/ExoSeq pipeline comes with documentation about the pipeline, found in the `docs/` directory:
 
 1. [Pipeline installation and configuration instructions](docs/installation.md)
 2. Pipeline configuration
@@ -33,7 +33,7 @@ The NGI-ExoSeq pipeline comes with documentation about the pipeline, found in th
 5. [Troubleshooting](docs/troubleshooting.md)
 
 ## Credits
-The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) and has been adapted by Alex Peltzer ([@apeltzer](https://github.com/apeltzer)) and Marie Gauder ([@mgauder](https://github.com/mgauder)) to our needs at QBiC, Tübingen, Germany.
+The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) and has been adapted by Alex Peltzer ([@apeltzer](https://github.com/apeltzer)), Marie Gauder ([@mgauder](https://github.com/mgauder)) from QBIC Tuebingen/Germany and Marc Hoeppner ([@marchoeppner] (https://github.com/marchoeppner)) from IKMB Kiel/Germany.
 
 In addition, we would like to recognise:
 * Developers at [SciLifeLab](http://www.scilifelab.se/) in Stockholm, Sweden 
@@ -47,24 +47,25 @@ In addition, we would like to recognise:
 
 
 ## Participating Institutions
-NGI-ExoSeq is now used by a number of core sequencing and bioinformatics facilities. Some of these are listed below. If you use this pipeline too, please let us know in an issue and we will add you to the list.
+nfcore/ExoSeq is now used by a number of core sequencing and bioinformatics facilities. Some of these are listed below. If you use this pipeline too, please let us know in an issue and we will add you to the list.
 
 <table>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/SciLifeLab/NGI-ExoSeq/master/docs/images/NGI_logo.png" width="200"></td>
+    <td><img src="https://raw.githubusercontent.com/SciLifeLab/nfcore/ExoSeq/master/docs/images/NGI_logo.png" width="200"></td>
     <td>National Genomics Infrastructure (NGI), Sweden</td>
     <td>https://ngisweden.scilifelab.se/</td>
   </tr>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/SciLifeLab/NGI-ExoSeq/master/docs/images/QBiC_logo.png" width="200"></td>
+    <td><img src="https://raw.githubusercontent.com/SciLifeLab/nfcore/ExoSeq/master/docs/images/QBiC_logo.png" width="200"></td>
     <td>Quantitative Biology Center (QBiC), Germany</td>
     <td>https://portal.qbic.uni-tuebingen.de/portal/</td>
   </tr>
+  
 </table>
 
 ---
 
-[![SciLifeLab](https://raw.githubusercontent.com/SciLifeLab/NGI-ExoSeq/master/docs/images/SciLifeLab_logo.png)](http://www.scilifelab.se/)
-[![National Genomics Infrastructure](https://raw.githubusercontent.com/SciLifeLab/NGI-ExoSeq/master/docs/images/NGI_logo.png)](https://ngisweden.scilifelab.se/)
+[![SciLifeLab](https://raw.githubusercontent.com/SciLifeLab/nfcore/ExoSeq/master/docs/images/SciLifeLab_logo.png)](http://www.scilifelab.se/)
+[![National Genomics Infrastructure](https://raw.githubusercontent.com/SciLifeLab/nfcore/ExoSeq/master/docs/images/NGI_logo.png)](https://ngisweden.scilifelab.se/)
 
 ---
