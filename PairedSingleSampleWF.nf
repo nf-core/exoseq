@@ -1,10 +1,8 @@
 #!/usr/bin/env nextflow
 /*
-vim: syntax=groovy
--*- mode: groovy;-*-
 
 ========================================================================================
-               NGI - E X O S E Q    B E S T    P R A C T I C E
+               nf-core/ E X O S E Q    B E S T    P R A C T I C E
 ========================================================================================
  #### Homepage / Documentation
  https://github.com/scilifelab/NGI-ExoSeq
@@ -28,10 +26,10 @@ Developed based on GATK's best practise, takes set of FASTQ files and performs:
 // Help message
 helpMessage = """
 ===============================================================================
-NGI-ExoSeq : Exome/Targeted sequence capture best practice analysis v${params.version}
+nf-core/ExoSeq : Exome/Targeted sequence capture best practice analysis v${params.version}
 ===============================================================================
 
-Usage: nextflow SciLifeLab/NGI-ExoSeq --reads '*_R{1,2}.fastq.gz' --genome GRCh37
+Usage: nextflow nf-core/ExoSeq --reads '*_R{1,2}.fastq.gz' --genome GRCh37
 
 This is a typical usage where the required parameters (with no defaults) were
 given. The available paramaters are listed below based on category
@@ -63,7 +61,7 @@ Other options:
 --project                      Uppnex project to user for SLURM executor
 
 For more detailed information regarding the parameters and usage refer to package
-documentation at https://github.com/scilifelab/NGI-ExoSeq
+documentation at https://github.com/nf-core/ExoSeq
 """
 
 // Variables and defaults
@@ -613,9 +611,9 @@ process get_software_versions {
 
     def sw_yaml_file = task.workDir.resolve('software_versions_mqc.yaml')
     sw_yaml_file.text  = """
-    id: 'ngi-exoseq'
-    section_name: 'NGI-ExoSeq Software Versions'
-    section_href: 'https://github.com/SciLifeLab/NGI-ExoSeq'
+    id: 'nf-core-exoseq'
+    section_name: 'nf-core/ExoSeq Software Versions'
+    section_href: 'https://github.com/nf-core/ExoSeq'
     plot_type: 'html'
     description: 'are collected at run time from the software output.'
     data: |
@@ -705,8 +703,8 @@ process multiqc {
 */
 
 def exoMessage() {
-  // Display NGI-ExoSeq message
-  log.info "NGI-ExoSeq ANALYSIS WORKFLOW ~ ${params.version} - " + this.grabRevision() + (workflow.commitId ? " [${workflow.commitId}]" : "")
+  // Display ExoSeq message
+  log.info "nf-core/ExoSeq ANALYSIS WORKFLOW ~ ${params.version} - " + this.grabRevision() + (workflow.commitId ? " [${workflow.commitId}]" : "")
 }
 
 def grabRevision() {
@@ -731,7 +729,7 @@ def nextflowMessage() {
 
 def versionMessage() {
   // Display version message
-  log.info "NGI-ExoSeq ANALYSIS WORKFLOW"
+  log.info "nf-core/ExoSeq ANALYSIS WORKFLOW"
   log.info "  version   : " + version
   log.info workflow.commitId ? "Git info    : ${workflow.repository} - ${workflow.revision} [${workflow.commitId}]" : "  revision  : " + this.grabRevision()
 }
