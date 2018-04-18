@@ -54,12 +54,12 @@ nfcore/ExoSeq is now used by a number of core sequencing and bioinformatics faci
 
 <table>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/SciLifeLab/nfcore/ExoSeq/master/docs/images/NGI_logo.png" width="200"></td>
+    <td><img src="https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/NGI_logo.png" width="200"></td>
     <td>National Genomics Infrastructure (NGI), Sweden</td>
     <td>https://ngisweden.scilifelab.se/</td>
   </tr>
   <tr>
-    <td><img src="https://raw.githubusercontent.com/SciLifeLab/nfcore/ExoSeq/master/docs/images/QBiC_logo.png" width="200"></td>
+    <td><img src="https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/qbic_logo.png" width="200"></td>
     <td>Quantitative Biology Center (QBiC), Germany</td>
     <td>https://portal.qbic.uni-tuebingen.de/portal/</td>
   </tr>
@@ -68,7 +68,7 @@ nfcore/ExoSeq is now used by a number of core sequencing and bioinformatics faci
 
 ---
 
-[![SciLifeLab](https://raw.githubusercontent.com/SciLifeLab/nfcore/ExoSeq/master/docs/images/SciLifeLab_logo.png)](http://www.scilifelab.se/)
-[![National Genomics Infrastructure](https://raw.githubusercontent.com/SciLifeLab/nfcore/ExoSeq/master/docs/images/NGI_logo.png)](https://ngisweden.scilifelab.se/)
+[![SciLifeLab](https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/SciLifeLab_logo.png)](http://www.scilifelab.se/)
+[![National Genomics Infrastructure](https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/NGI_logo.png)](https://ngisweden.scilifelab.se/)
 
 ---
