@@ -1,6 +1,6 @@
-# NGI-ExoSeq: Reference Genomes Configuration
+# nfcore/ExoSeq: Reference Genomes Configuration
 
-The NGI-ExoSeq pipeline needs a reference genome for alignment and annotation. If not already available, start by downloading the relevant reference, for example from the [GATK Resource Bundle](https://software.broadinstitute.org/gatk/download/bundle).
+The nfcore/ExoSeq pipeline needs a reference genome for alignment and annotation. If not already available, start by downloading the relevant reference, for example from the [GATK Resource Bundle](https://software.broadinstitute.org/gatk/download/bundle).
 
 The minimal requirements are a FASTA file. If a BWA reference is also specified, the pipeline won't have to generate them and will run faster.
 

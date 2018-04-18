@@ -1,4 +1,4 @@
-# NGI-Exoseq: UPPMAX Configuration
+# nfcore/ExoSeq: UPPMAX Configuration
 
 The pipeline comes bundled with configurations to use the [Swedish UPPMAX](https://www.uppmax.uu.se/) clusters (tested on `milou`, `rackham`, `bianca` and `irma`). As such, you shouldn't need to add any custom configuration - everything _should_ work out of the box.
 
@@ -18,27 +18,20 @@ If you are running the pipeline on Bianca or Irma, you will not have an active i
 First, to generate the singularity images, run the following command. Note that you need singularity installed - this is available on the other UPPMAX clusters (Milou and Rackham):
 
 ```bash
-singularity pull -name qbicsoftware-qbic-singularity-gatk.img qbicsoftware/qbic-singularity-gatk
-singularity pull -name qbicsoftware-qbic-singularity-snpeff.img qbicsoftware/qbic-singularity-snpeff
-singularity pull -name qbicsoftware-qbic-singularity-qualimap2.img qbicsoftware/qbic-singularity-qualimap2
-singularity pull -name qbicsoftware-qbic-singularity-picard.img qbicsoftware/qbic-singularity-picard
-singularity pull -name qbicsoftware-qbic-singularity-samtools.img qbicsoftware/qbic-singularity-samtools
-singularity pull -name qbicsoftware-qbic-singularity-bwa.img qbicsoftware/qbic-singularity-bwa
-singularity pull -name qbicsoftware-qbic-singularity-fastqc.img qbicsoftware/qbic-singularity-fastqc
-singularity pull -name qbicsoftware-qbic-singularity-trimgalore.img qbicsoftware/qbic-singularity-trimgalore
+singularity pull -name docker://nfcore/exoseq
 ```
 
-The NGI-Exoseq pipeline files can be downloaded from https://github.com/SciLifeLab/NGI-Exoseq/releases
+The nfcore/ExoSeq pipeline files can be downloaded from https://github.com/nfcore/ExoSeq
 
 Once transferred, you may create a `work` directory for nextflow and copy the singularity containers in there:
 
 ```bash
 mkdir -p work/singularity/
-mv qbicsoftware-qbic-singularity*.img work/singularity/
+mv nfcore-exoseq-*.img work/singularity/
 ```
 
 ```bash
-nextflow run /path/to/NGI-Exoseq -c /path/to/NGI-Exoseq/conf/base.config
+nextflow run /path/to/nfcore/ExoSeq -c /path/to/nfcore/ExoSeq/conf/base.config
 ```
 
 (Note that you'll need the other common flags such as `--reads` and `--genome` in addition to this).
