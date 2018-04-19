@@ -36,7 +36,7 @@ The nfcore/ExoSeq pipeline comes with documentation about the pipeline, found in
 5. [Troubleshooting](docs/troubleshooting.md)
 
 ## Credits
-The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) and has been adapted by Alex Peltzer ([@apeltzer](https://github.com/apeltzer)), Marie Gauder ([@mgauder](https://github.com/mgauder)) from QBIC Tuebingen/Germany and Marc Hoeppner ([@marchoeppner] (https://github.com/marchoeppner)) from IKMB Kiel/Germany.
+The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) and has been adapted by Alex Peltzer ([@apeltzer](https://github.com/apeltzer)), Marie Gauder ([@mgauder](https://github.com/mgauder)) from QBIC Tuebingen and Marc Hoeppner ([@marchoeppner](https://github.com/marchoeppner)) from IKMB Kiel/Germany.
 
 In addition, we would like to recognise:
 * Developers at [SciLifeLab](http://www.scilifelab.se/) in Stockholm, Sweden 
