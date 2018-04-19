@@ -4,6 +4,8 @@
 [![Gitter](https://img.shields.io/badge/gitter-%20join%20chat%20%E2%86%92-4fb99a.svg)](https://gitter.im/nf-core/Lobby)
 [![Docker Container available](https://img.shields.io/docker/automated/nfcore/exoseq.svg)](https://hub.docker.com/r/nfcore/exoseq/)
 ![Singularity Container available](https://img.shields.io/badge/singularity-available-7E4C74.svg)
+
+**This is still work in practice, but will hopefully soon be a stable version that will then be published in a release version.**
 ## Introduction
 
 **nfcore/ExoSeq** is a bioinformatics analysis pipeline that performs best-practice analysis pipeline for Exome Sequencing data.
@@ -36,39 +38,6 @@ The nfcore/ExoSeq pipeline comes with documentation about the pipeline, found in
 5. [Troubleshooting](docs/troubleshooting.md)
 
 ## Credits
-The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) and has been adapted by Alex Peltzer ([@apeltzer](https://github.com/apeltzer)), Marie Gauder ([@mgauder](https://github.com/mgauder)) from QBIC Tuebingen/Germany and Marc Hoeppner ([@marchoeppner] (https://github.com/marchoeppner)) from IKMB Kiel/Germany.
+The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) at the National Genomics Infrastructure, part of SciLifeLab in Stockholm and has been extended by Alex Peltzer ([@apeltzer](https://github.com/apeltzer)), Marie Gauder ([@mgauder](https://github.com/mgauder)) from QBIC Tuebingen/Germany as well as Marc Hoeppner ([@marchoeppner](https://github.com/marchoeppner)) from IKMB Kiel/Germany.
 
-In addition, we would like to recognise:
-* Developers at [SciLifeLab](http://www.scilifelab.se/) in Stockholm, Sweden 
-* Developers at [National Genomics Infrastructure](https://github.com/orgs/NationalGenomicsInfrastructure/people) for their help, supports and suggestions
-* [UPPMAX](http://www.uppmax.uu.se/) team
-* [Nextflow](https://www.nextflow.io/docs/latest/index.html#) team
-* [BWA](http://bio-bwa.sourceforge.net/) team
-* [GATK](https://software.broadinstitute.org/gatk/) team
-* [PICARD](http://broadinstitute.github.io/picard/) team
-* [SnpEff](http://snpeff.sourceforge.net/) team
-
-
-## Participating Institutions
-nfcore/ExoSeq is now used by a number of core sequencing and bioinformatics facilities. Some of these are listed below. If you use this pipeline too, please let us know in an issue and we will add you to the list.
-
-<table>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/NGI_logo.png" width="200"></td>
-    <td>National Genomics Infrastructure (NGI), Sweden</td>
-    <td>https://ngisweden.scilifelab.se/</td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/qbic_logo.png" width="200"></td>
-    <td>Quantitative Biology Center (QBiC), Germany</td>
-    <td>https://portal.qbic.uni-tuebingen.de/portal/</td>
-  </tr>
-  
-</table>
-
----
-
-[![SciLifeLab](https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/SciLifeLab_logo.png)](http://www.scilifelab.se/)
-[![National Genomics Infrastructure](https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/NGI_logo.png)](https://ngisweden.scilifelab.se/)
-
----
+Many thanks also to others who have helped out along the way too, including [@pditommaso](https://github.com/pditommaso), [@colindaven](https://github.com/colindaven).

@@ -23,22 +23,22 @@ mv nextflow ~/bin
 # sudo mv nextflow /usr/local/bin
 ```
 
-**You need NextFlow version >= 0.24 to run this pipeline.**
+**You need NextFlow version >= 0.27.6 to run this pipeline.**
 
 See [nextflow.io](https://www.nextflow.io/) and [NGI-NextflowDocs](https://github.com/SciLifeLab/NGI-NextflowDocs) for further instructions on how to install and configure Nextflow.
 
 ## 2) Install the Pipeline
-This pipeline itself needs no installation - NextFlow will automatically fetch it from GitHub if `nfcore/ExoSeq` is specified as the pipeline name.
+This pipeline itself needs no installation - NextFlow will automatically fetch it from GitHub if `nf-core/ExoSeq` is specified as the pipeline name.
 
 ### Offline use
 
 If you need to run the pipeline on a system with no internet connection, you will need to download the files yourself from GitHub and run them directly:
 
 ```bash
-wget https://github.com/nfcore/ExoSeq/archive/master.zip
+wget https://github.com/nf-core/ExoSeq/archive/master.zip
 unzip master.zip -d /my-pipelines/
 cd /my_data/
-nextflow run /my-pipelines/nfcore/ExoSeq-master
+nextflow run /my-pipelines/nf-core/ExoSeq-master
 ```
 
 ## 3) Bundle installation
@@ -50,10 +50,3 @@ Download the bundle data here to your local infrastructure:
 https://software.broadinstitute.org/gatk/download/bundle
 
 In case you are using Google Cloud, you may also access the storage bucket directly as listed on the webpage. Similar for Amazon AWS.
-
----
-
-[![SciLifeLab](images/SciLifeLab_logo.png)](http://www.scilifelab.se/)
-[![National Genomics Infrastructure](images/NGI_logo.png)](https://ngisweden.scilifelab.se/)
-
----
