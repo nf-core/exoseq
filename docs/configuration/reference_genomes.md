@@ -1,4 +1,4 @@
-# nfcore/ExoSeq: Reference Genomes Configuration
+# nf-core/ExoSeq: Reference Genomes Configuration
 
 The nfcore/ExoSeq pipeline needs a reference genome for alignment and annotation. If not already available, start by downloading the relevant reference, for example from the [GATK Resource Bundle](https://software.broadinstitute.org/gatk/download/bundle).
 
@@ -33,10 +33,3 @@ You can add as many genomes as you like as long as they have unique IDs.
 
 ## GATK Resource Bundle
 We are currently making use of the [GATK Resource Bundle](https://software.broadinstitute.org/gatk/download/bundle) human genome reference build `GRCh37`, but we would also be able to support `GRCh38`, if needed.
-
----
-
-[![SciLifeLab](images/SciLifeLab_logo.png)](http://www.scilifelab.se/)
-[![National Genomics Infrastructure](images/NGI_logo.png)](https://ngisweden.scilifelab.se/)
-
----

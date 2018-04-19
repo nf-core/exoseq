@@ -27,38 +27,12 @@ The above information is also covered in the [usage README](usage.md#--reads).
 If the pipeline ran without crashing and some samples are missing then there are two possible explanations:
 
 1. You made a mistake when declaring the input files - in that case see above.
-2. Your sample didn't reach 5% read alignment.
-
-Samples that receive less than 5% alignment are skipped for further analysis. You will thus see STAR/Hisat2 output for such samples but nothing more. This limit was set for two reasons, one it doesn't really make any sense to waste CPU hours running on data that bad. Secondly, and most importantly we found that some of the downstream processes would occasionally crash if we allowed it.
-
-
-## UPPMAX specific options
-
-### Bioinfo-tools not loaded
-For some unknown reason the bioinfo-tools module is sometimes not loaded properly which means that no other modules are loaded and the pipeline crashes. Fortunately this is easily fixed by simply making sure to already have it loaded when starting the pipeline.
-Example error message:
-
-```
-Command wrapper:
-
-  Lmod Warning: Did not find: FastQC/0.11.5
-
-  Try: "module spider FastQC/0.11.5"
-
-```
-
-To fix this before you start the pipeline run:
-
-```
-module load bioinfo-tools
-```
-
 
 ## Extra resources and getting help
 If you still have an issue with running the pipeline then feel free to contact us.
-Have look at the [issue tracker for our repo](https://github.com/SciLifeLab/nfcore/ExoSeq/issues). Maybe someone has already had the same problem?
+Have look at the [issue tracker for our repo](https://github.com/nf-core/ExoSeq/issues). Maybe someone has already had the same problem?
 
 <!-- Gitter is a chat client connected to GitHub, feel free to come in and chat with us;
-[nfcore/ExoSeq Gitter]((https://gitter.im/SciLifeLab/nfcore/ExoSeq)) -->
+[nf-core/ExoSeq Gitter]((https://gitter.im/nf-core/lobby)) -->
 
-If you have problems that are related to Nextflow and not our pipeline then check out the [Nextflow gitter channel](https://gitter.im/nextflow-io/nextflow) or the [google group](https://groups.google.com/forum/#!forum/nextflow).
+If you have problems that are related to Nextflow and not our pipeline then check out the [Nextflow gitter channel](https://gitter.im/nextflow-io/nextflow).

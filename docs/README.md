@@ -1,6 +1,6 @@
-# NGI-ExoSeq Documentation
+# nf-core/ExoSeq Documentation
 
-The NGI-ExoSeq documentation is split into a few different files:
+The nf-core/ExoSeq documentation is split into a few different files:
 
 * [`installation.md`](installation.md)
   * Pipeline installation and configuration instructions

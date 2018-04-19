@@ -19,10 +19,6 @@ picard BedToIntervalList I=S03723314_Covered.bed O=S03723314_Covered.interval_li
 picard BedToIntervalList I=S03723314_Regions.bed O=S03723314_Regions.interval_list SD=GRCh37.dict 
 ``` 
 
-Then specify these in a config file [as a new kit](https://github.com/apeltzer/QBIC-ExoSeq/blob/master/conf/local.config) and you should be fine. Otherwise, you can also use the parameters to specify the required kit files for your exome capture kit.
+Then specify these in a config file [as a new kit](https://github.com/nf-core/ExoSeq/blob/master/conf/local.config) and you should be fine. Otherwise, you can also use the parameters to specify the required kit files for your exome capture kit.
 
-
-
-
-
-
+This will be updated more to make the progress easier.
