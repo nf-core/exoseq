@@ -4,6 +4,8 @@
 [![Gitter](https://img.shields.io/badge/gitter-%20join%20chat%20%E2%86%92-4fb99a.svg)](https://gitter.im/nf-core/Lobby)
 [![Docker Container available](https://img.shields.io/docker/automated/nfcore/exoseq.svg)](https://hub.docker.com/r/nfcore/exoseq/)
 ![Singularity Container available](https://img.shields.io/badge/singularity-available-7E4C74.svg)
+
+**This is still work in practice, but will hopefully soon be a stable version that will then be published in a release version.**
 ## Introduction
 
 **nfcore/ExoSeq** is a bioinformatics analysis pipeline that performs best-practice analysis pipeline for Exome Sequencing data.
