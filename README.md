@@ -36,14 +36,6 @@ The nfcore/ExoSeq pipeline comes with documentation about the pipeline, found in
 5. [Troubleshooting](docs/troubleshooting.md)
 
 ## Credits
-The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) and has been adapted by Alex Peltzer ([@apeltzer](https://github.com/apeltzer)), Marie Gauder ([@mgauder](https://github.com/mgauder)) from QBIC Tuebingen and Marc Hoeppner ([@marchoeppner](https://github.com/marchoeppner)) from IKMB Kiel/Germany.
+The pipeline was initally developed by Senthilkumar Panneerselvam ([@senthil10](https://github.com/senthil10)) with a little help from Phil Ewels ([@ewels](https://github.com/ewels)) at the National Genomics Infrastructure, part of SciLifeLab in Stockholm and has been extended by Alex Peltzer ([@apeltzer](https://github.com/apeltzer)), Marie Gauder ([@mgauder](https://github.com/mgauder)) from QBIC Tuebingen/Germany as well as Marc Hoeppner ([@marchoeppner](https://github.com/marchoeppner)) from IKMB Kiel/Germany.
 
-In addition, we would like to recognise:
-* Developers at [SciLifeLab](http://www.scilifelab.se/) in Stockholm, Sweden 
-* Developers at [National Genomics Infrastructure](https://github.com/orgs/NationalGenomicsInfrastructure/people) for their help, supports and suggestions
-* [UPPMAX](http://www.uppmax.uu.se/) team
-* [Nextflow](https://www.nextflow.io/docs/latest/index.html#) team
-* [BWA](http://bio-bwa.sourceforge.net/) team
-* [GATK](https://software.broadinstitute.org/gatk/) team
-* [PICARD](http://broadinstitute.github.io/picard/) team
-* [SnpEff](http://snpeff.sourceforge.net/) team
+Many thanks also to others who have helped out along the way too, including [@pditommaso](https://github.com/pditommaso), [@colindaven](https://github.com/colindaven).
