@@ -47,28 +47,3 @@ In addition, we would like to recognise:
 * [GATK](https://software.broadinstitute.org/gatk/) team
 * [PICARD](http://broadinstitute.github.io/picard/) team
 * [SnpEff](http://snpeff.sourceforge.net/) team
-
-
-## Participating Institutions
-nfcore/ExoSeq is now used by a number of core sequencing and bioinformatics facilities. Some of these are listed below. If you use this pipeline too, please let us know in an issue and we will add you to the list.
-
-<table>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/NGI_logo.png" width="200"></td>
-    <td>National Genomics Infrastructure (NGI), Sweden</td>
-    <td>https://ngisweden.scilifelab.se/</td>
-  </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/qbic_logo.png" width="200"></td>
-    <td>Quantitative Biology Center (QBiC), Germany</td>
-    <td>https://portal.qbic.uni-tuebingen.de/portal/</td>
-  </tr>
-  
-</table>
-
----
-
-[![SciLifeLab](https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/SciLifeLab_logo.png)](http://www.scilifelab.se/)
-[![National Genomics Infrastructure](https://raw.githubusercontent.com/nf-core/ExoSeq/master/docs/images/NGI_logo.png)](https://ngisweden.scilifelab.se/)
-
----
