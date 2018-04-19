@@ -56,9 +56,9 @@ module load bioinfo-tools
 
 ## Extra resources and getting help
 If you still have an issue with running the pipeline then feel free to contact us.
-Have look at the [issue tracker for our repo](https://github.com/SciLifeLab/NGI-ExoSeq/issues). Maybe someone has already had the same problem?
+Have look at the [issue tracker for our repo](https://github.com/SciLifeLab/nfcore/ExoSeq/issues). Maybe someone has already had the same problem?
 
 <!-- Gitter is a chat client connected to GitHub, feel free to come in and chat with us;
-[NGI-ExoSeq Gitter]((https://gitter.im/SciLifeLab/NGI-ExoSeq)) -->
+[nfcore/ExoSeq Gitter]((https://gitter.im/SciLifeLab/nfcore/ExoSeq)) -->
 
 If you have problems that are related to Nextflow and not our pipeline then check out the [Nextflow gitter channel](https://gitter.im/nextflow-io/nextflow) or the [google group](https://groups.google.com/forum/#!forum/nextflow).

@@ -1,7 +1,7 @@
 Installation Instructions
 =========================
 
-To start using the NGI-ExoSeq pipeline, there are three steps described below:
+To start using the nfcore/ExoSeq pipeline, there are three steps described below:
 
 1. [Install Nextflow](#install-nextflow)
 2. [Install the pipeline](#install-the-pipeline)
@@ -28,17 +28,17 @@ mv nextflow ~/bin
 See [nextflow.io](https://www.nextflow.io/) and [NGI-NextflowDocs](https://github.com/SciLifeLab/NGI-NextflowDocs) for further instructions on how to install and configure Nextflow.
 
 ## 2) Install the Pipeline
-This pipeline itself needs no installation - NextFlow will automatically fetch it from GitHub if `scilifelab/NGI-ExoSeq` is specified as the pipeline name.
+This pipeline itself needs no installation - NextFlow will automatically fetch it from GitHub if `nfcore/ExoSeq` is specified as the pipeline name.
 
 ### Offline use
 
 If you need to run the pipeline on a system with no internet connection, you will need to download the files yourself from GitHub and run them directly:
 
 ```bash
-wget https://github.com/scilifelab/NGI-ExoSeq/archive/master.zip
+wget https://github.com/nfcore/ExoSeq/archive/master.zip
 unzip master.zip -d /my-pipelines/
 cd /my_data/
-nextflow run /my-pipelines/NGI-ExoSeq-master
+nextflow run /my-pipelines/nfcore/ExoSeq-master
 ```
 
 ## 3) Bundle installation

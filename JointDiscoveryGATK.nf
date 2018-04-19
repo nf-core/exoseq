@@ -1,13 +1,10 @@
 #!/usr/bin/env nextflow
 /*
-vim: syntax=groovy
--*- mode: groovy;-*-
-
 ========================================================================================
-               NGI - E X O S E Q    B E S T    P R A C T I C E
+               nf-core E X O S E Q    B E S T    P R A C T I C E
 ========================================================================================
  #### Homepage / Documentation
- https://github.com/scilifelab/NGI-ExoSeq
+ https://github.com/nf-core/ExoSeq
  #### Authors
  Senthilkumar Panneerselvam @senthil10 <senthilkumar.panneerselvam@scilifelab.se>
  Phil Ewels @ewels <phil.ewels@scilifelab.se>
@@ -28,10 +25,10 @@ version = '0.8.1'
 // Help message
 helpMessage = """
 ===============================================================================
-NGI-ExoSeq : Exome/Targeted sequence capture best practice analysis v${version}
+nf-core/ExoSeq : Exome/Targeted sequence capture best practice analysis v${version}
 ===============================================================================
 
-Usage: nextflow SciLifeLab/NGI-ExoSeq --reads '*_R{1,2}.fastq.gz' --genome GRCh37
+Usage: nextflow nf-core/ExoSeq --reads '*_R{1,2}.fastq.gz' --genome GRCh37
 
 This is a typical usage where the required parameters (with no defaults) were
 given. The available paramaters are listed below based on category
@@ -63,7 +60,7 @@ Other options:
 --project                      Uppnex project to user for SLURM executor
 
 For more detailed information regarding the parameters and usage refer to package
-documentation at https:// github.com/scilifelab/NGI-ExoSeq
+documentation at https:// github.com/nf-core/ExoSeq
 """
 
 // Variables and defaults
@@ -529,9 +526,9 @@ process get_software_versions {
 
     def sw_yaml_file = task.workDir.resolve('software_versions_mqc.yaml')
     sw_yaml_file.text  = """
-    id: 'ngi-exoseq'
-    section_name: 'NGI-ExoSeq Software Versions'
-    section_href: 'https://github.com/SciLifeLab/NGI-ExoSeq'
+    id: 'nf-core/ExoSeq'
+    section_name: 'nf-core/ExoSeq Software Versions'
+    section_href: 'https://github.com/nf-core/ExoSeq'
     plot_type: 'html'
     description: 'are collected at run time from the software output.'
     data: |
