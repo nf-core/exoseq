@@ -12,6 +12,7 @@ regexes = {
     'Samtools': ['v_samtools.txt', r"samtools (\S+)"],
     'BWA': ['v_bwa.txt', r"Version: (\S+)"],
     'Qualimap': ['v_qualimap.txt', r"QualiMap v.(\S+)"],
+    'GATK': ['v_gatk.txt', r"Version:([\d\.]+)/)"],
     'MultiQC': ['v_multiqc.txt', r"multiqc, version (\S+)"],
 }
 results = OrderedDict()
@@ -23,6 +24,7 @@ results['Trim Galore!'] = '<span style="color:#999999;\">N/A</span>'
 results['Samtools'] = '<span style="color:#999999;\">N/A</span>'
 results['BWA'] = '<span style="color:#999999;\">N/A</span>'
 results['Qualimap'] = '<span style="color:#999999;\">N/A</span>'
+results['GATK'] = '<span style="color:#999999;\">N/A</span>'
 results['MultiQC'] = '<span style="color:#999999;\">N/A</span>'
 
 # Search each file using its regex
@@ -34,7 +36,7 @@ for k, v in regexes.items():
             results[k] = "v{}".format(match.group(1))
 
 # Remove empty keys (defining them above ensures correct order)
-for k in ['Bismark', 'Bismark Deduplication', 'Bismark methXtract', 'Bismark Report', 'Bismark Summary', 'Samtools', 'BWA', 'bwa-meth', 'Picard MarkDuplicates', 'MethylDackel']:
+for k in ['FastQC', 'Cutadapt', 'Trim Galore!', 'Samtools', 'BWA', 'Qualimap', 'GATK']:
     if results[k] == '<span style="color:#999999;\">N/A</span>':
         del(results[k])
 

@@ -655,12 +655,12 @@ process multiqc {
 
     input:
     file multiQCconfig
-    file (fastqc:'fastqc/*') from fastqc_results.collect()
-    file ('trimgalore/*') from trimgalore_results.collect()
-    file ('gatk_base_recalibration/T*') from gatk_base_recalibration_results.collect()
-    file ('gatk_picard_duplicates/*') from markdup_results.collect()
-    file ('qualimap/*') from qualimap_results.collect()
-    file ('software_versions/*') from software_versions_yaml.collect()
+    file (fastqc:'fastqc/*') from fastqc_results.toList()
+    file ('trimgalore/*') from trimgalore_results.toList()
+    file ('gatk_base_recalibration/T*') from gatk_base_recalibration_results.toList()
+    file ('gatk_picard_duplicates/*') from markdup_results.toList()
+    file ('qualimap/*') from qualimap_results.toList()
+    file ('software_versions/*') from software_versions_yaml.toList()
 
 
     output:
