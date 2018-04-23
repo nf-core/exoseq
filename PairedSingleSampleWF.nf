@@ -587,40 +587,23 @@ software_versions = [
 */ 
 
 process get_software_versions {
-    cache false
-    executor 'local'
-
-    input:
-    val fastqc from fastqc_stdout.collect()
-    val trim_galore from trimgalore_logs.collect()
-    val bwa from bwa_stdout.collect()
-    val gatk from gatk_stdout.collect()
-    val samtools from samtools_stdout.collect()
-    val qualimap from qualimap_stdout.collect()
 
     output:
     file 'software_versions_mqc.yaml' into software_versions_yaml
 
-    exec:
-    software_versions['FastQC'] = fastqc[0].getText().find(/FastQC v(\S+)/) { match, version -> "v$version"}
-    software_versions['Trim Galore!'] = trim_galore[0].getText().find(/Trim Galore version: (\S+)/) {match, version -> "v$version"}
-    software_versions['BWA'] = bwa[0].getText().find(/Version: (\S+)/) {match, version -> "v$version"}
-    software_versions['GATK'] = gatk[0].getText().find(/Version:([\d\.]+)/) {match, version -> "v$version"} 
-    software_versions['Samtools'] = samtools[0].getText().find(/Version: ([\d\.]+)/) {match, version -> "v$version"}
-    software_versions['QualiMap'] = qualimap[0].getText().find(/QualiMap v.(\S+)/) {match, version -> "v$version"}
-
-    def sw_yaml_file = task.workDir.resolve('software_versions_mqc.yaml')
-    sw_yaml_file.text  = """
-    id: 'nf-core-exoseq'
-    section_name: 'nf-core/ExoSeq Software Versions'
-    section_href: 'https://github.com/nf-core/ExoSeq'
-    plot_type: 'html'
-    description: 'are collected at run time from the software output.'
-    data: |
-        <dl class=\"dl-horizontal\">
-${software_versions.collect{ k,v -> "            <dt>$k</dt><dd>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</dd>" }.join("\n")}
-        </dl>
-    """.stripIndent()
+    script:
+    """
+    echo "$params.version" &> v_nfcore_exoseq.txt
+    echo "$workflow.nextflow.version" &> v_nextflow.txt
+    fastqc --version &> v_fastqc.txt
+    cutadapt --version &> v_cutadapt.txt
+    trim_galore --version &> v_trim_galore.txt
+    samtools --version &> v_samtools 
+    bwa &> v_bwa.txt 2>&1 || true
+    qualimap --version &> v_qualimap.txt
+    multiqc --version &> v_multiqc.txt
+    scrape_software_versions.py &> software_versions_mqc.yaml
+    """
 }
 
 /**
