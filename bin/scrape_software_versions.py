@@ -12,7 +12,7 @@ regexes = {
     'Samtools': ['v_samtools.txt', r"samtools (\S+)"],
     'BWA': ['v_bwa.txt', r"Version: (\S+)"],
     'Qualimap': ['v_qualimap.txt', r"QualiMap v.(\S+)"],
-    'GATK': ['v_gatk.txt', r"Version:([\d\.]+)/)"],
+    'GATK': ['v_gatk.txt', r"Version:([\d\.]+)"],
     'MultiQC': ['v_multiqc.txt', r"multiqc, version (\S+)"],
 }
 results = OrderedDict()
