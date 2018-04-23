@@ -258,7 +258,6 @@ process fastqc {
     script:
     """
     fastqc -q $reads
-    fastqc --version
     """
 }
 
@@ -327,8 +326,6 @@ process bwamem {
     $params.gfasta \\
     $reads \\
     > ${name}_bwa.sam
-    # Print version number to standard out
-    echo "BWA Version:"\$(bwa 2>&1)
     """
 }
 
@@ -358,8 +355,6 @@ process sortSam {
         -@ ${task.cpus}\\
         ${avail_mem}M \\
         -o ${raw_sam}.sorted.bam
-    # Print version number to standard out
-    echo "Samtools V:"\$(samtools 2>&1)
     """
 }
 
@@ -426,8 +421,6 @@ process recal_bam_files {
         --known-sites $params.dbsnp \\
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
-    # Print version number to standard out
-    echo "GATK version "\$(gatk BaseRecalibrator --version 2>&1)
     """
     } else {
     """
@@ -438,8 +431,6 @@ process recal_bam_files {
         --known-sites $params.dbsnp \\
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
-    # Print version number to standard out
-    echo "GATK version "\$(gatk BaseRecalibrator --version 2>&1)
     """    
     }
 }
@@ -511,8 +502,6 @@ process qualiMap {
     -nt ${task.cpus} \\
     $gff \\
     --java-mem-size=${task.memory.toGiga()}G \\
-    # Print version number to standard out
-    echo "QualiMap version "\$(qualimap --version 2>&1)
     """
 }
 
@@ -572,17 +561,9 @@ process variantCall {
     }
 }
 
-/*
- * Step 9 - Generate Software Versions Map
- * 
-*/
-software_versions = [
-  'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'GATK': null, 'Samtools': null,
-  'QualiMap': null, 'Nextflow': "v$workflow.nextflow.version"
-]
 
 /*
-* Step 10 - Generate a YAML file for software versions in the pipeline
+* Step 9 - Generate a YAML file for software versions in the pipeline
 * This is then parsed by MultiQC and the report feature to produce a final report with the software Versions in the pipeline.
 */ 
 
@@ -598,16 +579,17 @@ process get_software_versions {
     fastqc --version &> v_fastqc.txt
     cutadapt --version &> v_cutadapt.txt
     trim_galore --version &> v_trim_galore.txt
-    samtools --version &> v_samtools 
+    samtools --version &> v_samtools.txt
     bwa &> v_bwa.txt 2>&1 || true
     qualimap --version &> v_qualimap.txt
+    gatk-launch BaseRecalibrator --version &> v_gatk.txt
     multiqc --version &> v_multiqc.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
 
 /**
-* Step 11 - Generate MultiQC config file
+* Step 10 - Generate MultiQC config file
 *
 */ 
 
