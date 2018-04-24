@@ -258,7 +258,6 @@ process fastqc {
     script:
     """
     fastqc -q $reads
-    fastqc --version
     """
 }
 
@@ -327,8 +326,6 @@ process bwamem {
     $params.gfasta \\
     $reads \\
     > ${name}_bwa.sam
-    # Print version number to standard out
-    echo "BWA Version:"\$(bwa 2>&1)
     """
 }
 
@@ -358,8 +355,6 @@ process sortSam {
         -@ ${task.cpus}\\
         ${avail_mem}M \\
         -o ${raw_sam}.sorted.bam
-    # Print version number to standard out
-    echo "Samtools V:"\$(samtools 2>&1)
     """
 }
 
@@ -426,8 +421,6 @@ process recal_bam_files {
         --known-sites $params.dbsnp \\
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
-    # Print version number to standard out
-    echo "GATK version "\$(gatk BaseRecalibrator --version 2>&1)
     """
     } else {
     """
@@ -438,8 +431,6 @@ process recal_bam_files {
         --known-sites $params.dbsnp \\
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
-    # Print version number to standard out
-    echo "GATK version "\$(gatk BaseRecalibrator --version 2>&1)
     """    
     }
 }
@@ -511,8 +502,6 @@ process qualiMap {
     -nt ${task.cpus} \\
     $gff \\
     --java-mem-size=${task.memory.toGiga()}G \\
-    # Print version number to standard out
-    echo "QualiMap version "\$(qualimap --version 2>&1)
     """
 }
 
@@ -572,59 +561,35 @@ process variantCall {
     }
 }
 
-/*
- * Step 9 - Generate Software Versions Map
- * 
-*/
-software_versions = [
-  'FastQC': null, 'Trim Galore!': null, 'BWA': null, 'GATK': null, 'Samtools': null,
-  'QualiMap': null, 'Nextflow': "v$workflow.nextflow.version"
-]
 
 /*
-* Step 10 - Generate a YAML file for software versions in the pipeline
+* Step 9 - Generate a YAML file for software versions in the pipeline
 * This is then parsed by MultiQC and the report feature to produce a final report with the software Versions in the pipeline.
 */ 
 
 process get_software_versions {
-    cache false
-    executor 'local'
-
-    input:
-    val fastqc from fastqc_stdout.collect()
-    val trim_galore from trimgalore_logs.collect()
-    val bwa from bwa_stdout.collect()
-    val gatk from gatk_stdout.collect()
-    val samtools from samtools_stdout.collect()
-    val qualimap from qualimap_stdout.collect()
 
     output:
     file 'software_versions_mqc.yaml' into software_versions_yaml
 
-    exec:
-    software_versions['FastQC'] = fastqc[0].getText().find(/FastQC v(\S+)/) { match, version -> "v$version"}
-    software_versions['Trim Galore!'] = trim_galore[0].getText().find(/Trim Galore version: (\S+)/) {match, version -> "v$version"}
-    software_versions['BWA'] = bwa[0].getText().find(/Version: (\S+)/) {match, version -> "v$version"}
-    software_versions['GATK'] = gatk[0].getText().find(/Version:([\d\.]+)/) {match, version -> "v$version"} 
-    software_versions['Samtools'] = samtools[0].getText().find(/Version: ([\d\.]+)/) {match, version -> "v$version"}
-    software_versions['QualiMap'] = qualimap[0].getText().find(/QualiMap v.(\S+)/) {match, version -> "v$version"}
-
-    def sw_yaml_file = task.workDir.resolve('software_versions_mqc.yaml')
-    sw_yaml_file.text  = """
-    id: 'nf-core-exoseq'
-    section_name: 'nf-core/ExoSeq Software Versions'
-    section_href: 'https://github.com/nf-core/ExoSeq'
-    plot_type: 'html'
-    description: 'are collected at run time from the software output.'
-    data: |
-        <dl class=\"dl-horizontal\">
-${software_versions.collect{ k,v -> "            <dt>$k</dt><dd>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</dd>" }.join("\n")}
-        </dl>
-    """.stripIndent()
+    script:
+    """
+    echo "$params.version" &> v_nfcore_exoseq.txt
+    echo "$workflow.nextflow.version" &> v_nextflow.txt
+    fastqc --version &> v_fastqc.txt
+    cutadapt --version &> v_cutadapt.txt
+    trim_galore --version &> v_trim_galore.txt
+    samtools --version &> v_samtools.txt
+    bwa &> v_bwa.txt 2>&1 || true
+    qualimap --version &> v_qualimap.txt
+    gatk-launch BaseRecalibrator --version &> v_gatk.txt
+    multiqc --version &> v_multiqc.txt
+    scrape_software_versions.py &> software_versions_mqc.yaml
+    """
 }
 
 /**
-* Step 11 - Generate MultiQC config file
+* Step 10 - Generate MultiQC config file
 *
 */ 
 
@@ -672,12 +637,12 @@ process multiqc {
 
     input:
     file multiQCconfig
-    file (fastqc:'fastqc/*') from fastqc_results.collect()
-    file ('trimgalore/*') from trimgalore_results.collect()
-    file ('gatk_base_recalibration/T*') from gatk_base_recalibration_results.collect()
-    file ('gatk_picard_duplicates/*') from markdup_results.collect()
-    file ('qualimap/*') from qualimap_results.collect()
-    file ('software_versions/*') from software_versions_yaml.collect()
+    file (fastqc:'fastqc/*') from fastqc_results.toList()
+    file ('trimgalore/*') from trimgalore_results.toList()
+    file ('gatk_base_recalibration/T*') from gatk_base_recalibration_results.toList()
+    file ('gatk_picard_duplicates/*') from markdup_results.toList()
+    file ('qualimap/*') from qualimap_results.toList()
+    file ('software_versions/*') from software_versions_yaml.toList()
 
 
     output:
