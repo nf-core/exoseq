@@ -1,7 +1,7 @@
 # ![nf-core/ExoSeq](https://raw.githubusercontent.com/nf-core/Exoseq/master/docs/images/ExoSeq_logo.png)
 
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.27.6-brightgreen.svg)](https://www.nextflow.io/)
-[![Gitter](https://img.shields.io/badge/gitter-%20join%20chat%20%E2%86%92-4fb99a.svg)](https://gitter.im/nf-core/Lobby)
+[![Gitter](https://img.shields.io/badge/gitter-%20join%20chat%20%E2%86%92-4fb99a.svg)](https://gitter.im/nf-core/exoseq)
 [![Docker Container available](https://img.shields.io/docker/automated/nfcore/exoseq.svg)](https://hub.docker.com/r/nfcore/exoseq/)
 ![Singularity Container available](https://img.shields.io/badge/singularity-available-7E4C74.svg)
 
