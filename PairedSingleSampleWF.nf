@@ -43,22 +43,9 @@ Output:
 --outdir                       Path where the results to be saved [Default: './results']
 
 Kit files:
+--kitfiles                     Path to kitfiles defined in metafiles.config
+--metafiles                    Path to metafiles defined in metafiles.config
 --kit                          Kit used to prep samples [Default: 'agilent_v5']
---bait                         Absolute path to bait file
---target                       Absolute path to target file
---target_bed                   Absolute path to target bed file (snpEff compatible format)
-
-Genome/Variation files:
---dbsnp                        Absolute path to dbsnp file
---thousandg                    Absolute path to 1000G file
---mills                        Absolute path to Mills file
---omni                         Absolute path to Omni file
---gfasta                       Absolute path to genome fasta file
---bwa_index                    Absolute path to bwa genome index
-
-Other options:
---exome                        Exome data, if this is not set, run as genome data
---project                      Uppnex project to user for SLURM executor
 
 For more detailed information regarding the parameters and usage refer to package
 documentation at https://github.com/nf-core/ExoSeq
@@ -69,9 +56,7 @@ params.name = false
 params.help = false
 params.reads = false
 params.singleEnd = false
-params.genome = false
 params.run_id = false
-params.exome = false //default genome, set to true to run restricting to exome positions
 params.aligner = 'bwa' //Default, but stay tuned for later ;-) 
 params.saveReference = true
 
@@ -91,23 +76,13 @@ params.three_prime_clip_r2 = 0
 
 // Kit options
 params.kit = 'agilent_v5'
-params.bait = params.kitFiles[ params.kit ] ? params.kitFiles[ params.kit ].bait ?: false : false
-params.target = params.kitFiles[ params.kit ] ? params.kitFiles[ params.kit ].target ?: false : false
-params.target_bed = params.kitFiles[ params.kit ] ? params.kitFiles[ params.kit ].target_bed ?: false : false
-params.dbsnp = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].dbsnp ?: false : false
-params.thousandg = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].thousandg ?: false : false
-params.mills = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].mills ?: false : false
-params.omni = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].omni ?: false : false
-params.gfasta = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].gfasta ?: false : false
-params.bwa_index = params.metaFiles[ params.genome ] ? params.metaFiles[ params.genome ].bwa_index ?: false : false
 
 // Has the run name been specified by the user?
-//  this has the bonus effect of catching both -name and --name
+// this has the bonus effect of catching both -name and --name
 custom_runName = params.name
 if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
   custom_runName = workflow.runName
 }
-
 
 // Show help when needed
 if (params.help){
@@ -119,14 +94,12 @@ if (params.help){
 if (!params.reads || !params.genome){
     exit 1, "Parameters '--reads' and '--genome' are required to run the pipeline"
 }
-if (!params.kitFiles[ params.kit ] && ['bait', 'target'].count{ params[it] } != 2){
-    exit 1, "Kit '${params.kit}' is not available in pre-defined config, so " +
-            "provide all kit specific files with option '--bait' and '--target'"
+if (!params.kitfiles){
+    exit 1, "No Exome Capturing Kit specified!"
 }
- if (!params.metaFiles[ params.genome ] && ['gfasta', 'bwa_index', 'dbsnp', 'thousandg', 'mills', 'omni'].count{ params[it] } != 6){
-     exit 1, "Genome '${params.genome}' is not available in pre-defined config, so you need to provide all genome specific " +
-             "files with options '--gfasta', '--bwa_index', '--dbsnp', '--thousandg', '--mills' and '--omni'"
- }
+if (!params.metafiles){
+    exit 1, "No Exome Metafiles specified!"
+}
 
 // Create a channel for input files
 
@@ -137,7 +110,6 @@ Channel
 
 
 // Validate Input indices for BWA Mem and GATK
-
 if(params.aligner == 'bwa' ){
     bwaId = Channel
         .fromPath("${params.gfasta}.bwt")
@@ -150,8 +122,7 @@ def summary = [:]
 summary['Run Name']     = custom_runName ?: workflow.runName
 summary['Reads']        = params.reads
 summary['Data Type']    = params.singleEnd ? 'Single-End' : 'Paired-End'
-summary['Genome']       = params.genome
-summary['WES/WGS']      = params.exome ? 'WES' : 'WGS'
+summary['Genome Assembly']       = params.genome
 summary['Trim R1'] = params.clip_r1
 summary['Trim R2'] = params.clip_r2
 summary["Trim 3' R1"] = params.three_prime_clip_r1
@@ -177,7 +148,6 @@ summary['Script dir']     = workflow.projectDir
 summary['Config Profile'] = workflow.profile
 log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
 log.info "========================================="
-
 
 try {
     if( ! workflow.nextflow.version.matches(">= $params.nf_required_version") ){

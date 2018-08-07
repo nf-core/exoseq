@@ -1,0 +1,35 @@
+sudo: required
+language: java
+jdk: openjdk8
+services:
+  - docker
+python:
+  - "2.7"
+
+cache: pip
+
+matrix:
+  fast_finish: true
+
+install:
+  - "./scripts/install.sh --tool $TOOL_INSTALL"
+  # Install nf-core/tools
+  - git clone https://github.com/nf-core/tools.git /tmp/nf-core-tools
+  - cd /tmp/nf-core-tools
+  - pip install --user -e .
+  # Get Kit Files
+  - wget -O kits.tar.bz2 https://qbic-intranet.am10.uni-tuebingen.de/owncloud/index.php/s/Qvku3etEqb3PW58/download
+  # Get tiny Reference Files
+  # Reset
+  - cd ${TRAVIS_BUILD_DIR}/tests
+
+env:
+  global:
+    - NXF_VER=0.27.6 SGT_VER=2.4.2
+  matrix:
+    - PROFILE=docker TEST=TOOLS TOOL_INSTALL=ALL
+    - PROFILE=singularity TEST=TOOLS TOOL_INSTALL=ALL
+
+script:
+  - "nf-core lint ${TRAVIS_BUILD_DIR}"
+  - "./scripts/test.sh --profile $PROFILE --test $TEST"
