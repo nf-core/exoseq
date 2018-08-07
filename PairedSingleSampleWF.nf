@@ -29,27 +29,31 @@ helpMessage = """
 nf-core/ExoSeq : Exome/Targeted sequence capture best practice analysis v${params.version}
 ===============================================================================
 
-Usage: nextflow nf-core/ExoSeq --reads '*_R{1,2}.fastq.gz' --genome GRCh37
+Usage: nextflow nf-core/ExoSeq --reads '*_R{1,2}.fastq.gz' --genome GRCh37 --kitfiles 'kitpath' --metafiles 'metapath'
 
 This is a typical usage where the required parameters (with no defaults) were
 given. The available paramaters are listed below based on category
 
 Required parameters:
---reads                        Absolute path to project directory
---genome                       Name of iGenomes reference
-
+    --reads                        Absolute path to project directory
+    --genome                       Name of iGenomes reference
 
 Output:
---outdir                       Path where the results to be saved [Default: './results']
+    --outdir                       Path where the results to be saved [Default: './results']
+    --outdir                      The output directory where the results will be saved
+    -w/--work-dir                 The temporary directory where intermediate data will be saved
 
 Kit files:
---kitfiles                     Path to kitfiles defined in metafiles.config
---metafiles                    Path to metafiles defined in metafiles.config
---kit                          Kit used to prep samples [Default: 'agilent_v5']
+    --kitfiles                     Path to kitfiles defined in metafiles.config
+    --metafiles                    Path to metafiles defined in metafiles.config
+    --kit                          Kit used to prep samples [Default: 'agilent_v5']
+
+AWSBatch options:
+    --awsqueue                    The AWSBatch JobQueue that needs to be set when running on AWSBatch
+    --awsregion                   The AWS Region for your AWS Batch job to run on
 
 For more detailed information regarding the parameters and usage refer to package
-documentation at https://github.com/nf-core/ExoSeq
-"""
+documentation at https://github.com/nf-core/ExoSeq""".stripIndent()
 
 // Variables and defaults
 params.name = false
@@ -99,6 +103,11 @@ if (!params.kitfiles){
 }
 if (!params.metafiles){
     exit 1, "No Exome Metafiles specified!"
+}
+//AWSBatch sanity checking
+if(workflow.profile == 'awsbatch'){
+    if (!params.awsqueue || !params.awsregion) exit 1, "Specify correct --awsqueue and --awsregion parameters on AWSBatch!"
+    if (!workflow.workDir.startsWith('s3') || !params.outdir.startsWith('s3')) exit 1, "Specify S3 URLs for workDir and outdir parameters on AWSBatch!"
 }
 
 // Create a channel for input files
