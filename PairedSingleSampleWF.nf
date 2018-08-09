@@ -35,18 +35,17 @@ This is a typical usage where the required parameters (with no defaults) were
 given. The available paramaters are listed below based on category
 
 Required parameters:
-    --reads                        Absolute path to project directory
-    --genome                       Name of iGenomes reference
+    --reads                       Absolute path to project directory
+    --genome                      Name of iGenomes reference
 
 Output:
-    --outdir                       Path where the results to be saved [Default: './results']
-    --outdir                      The output directory where the results will be saved
+    --outdir                      Path where the results to be saved [Default: './results']
     -w/--work-dir                 The temporary directory where intermediate data will be saved
 
 Kit files:
-    --kitfiles                     Path to kitfiles defined in metafiles.config
-    --metafiles                    Path to metafiles defined in metafiles.config
-    --kit                          Kit used to prep samples [Default: 'agilent_v5']
+    --kitfiles                    Path to kitfiles defined in metafiles.config
+    --metafiles                   Path to metafiles defined in metafiles.config
+    --kit                         Kit used to prep samples [Default: 'agilent_v5']
 
 AWSBatch options:
     --awsqueue                    The AWSBatch JobQueue that needs to be set when running on AWSBatch
@@ -61,7 +60,7 @@ params.help = false
 params.reads = false
 params.singleEnd = false
 params.run_id = false
-params.aligner = 'bwa' //Default, but stay tuned for later ;-) 
+params.aligner = 'bwa' //Default, but stay tuned for later ;-)
 params.saveReference = true
 
 
@@ -200,7 +199,7 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         tag "$params.gfasta"
         publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
                    saveAs: { params.saveReference ? it : null }, mode: 'copy'
-        
+
         input:
         file fasta from fasta_for_samtools_index
 
@@ -313,7 +312,7 @@ process bwamem {
 
 /*
 *  STEP 4 - Mark PCR duplicates in sorted BAM file
-*/ 
+*/
 
 process markDuplicates {
     tag "${name}"
@@ -347,8 +346,8 @@ process markDuplicates {
 
 /*
  * Step 5 - Recalibrate BAM file with known variants and BaseRecalibrator
- * 
-*/ 
+ *
+*/
 process recal_bam_files {
     tag "${name}"
     publishDir "${params.outdir}/GATK_Recalibration", mode: 'copy'
@@ -383,7 +382,7 @@ process recal_bam_files {
         --known-sites $params.dbsnp \\
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
-    """    
+    """
     }
 }
 
@@ -419,19 +418,19 @@ process applyBQSR {
         -O ${name}.bam \\
         --create-output-bam-index true \\
         --java-options -Xmx${task.memory.toGiga()}g
-    """    
+    """
     }
 
 }
 
 /*
  * Step 7 - Determine quality metrics of mapped BAM files using QualiMap 2
- * 
-*/ 
+ *
+*/
 process qualiMap {
     tag "${name}"
     publishDir "${params.outdir}/Qualimap", mode: 'copy'
-    
+
     input:
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
 
@@ -459,8 +458,8 @@ process qualiMap {
 
 /*
  * Step 8 - Call Variants with HaplotypeCaller in GVCF mode (differentiate between exome and whole genome data here)
- * 
-*/ 
+ *
+*/
 process variantCall {
     tag "${name}"
     publishDir "${params.outdir}/GATK_VariantCalling/", mode: 'copy',
@@ -509,7 +508,7 @@ process variantCall {
         --dbsnp $params.dbsnp \\
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
-    """    
+    """
     }
 }
 
@@ -517,7 +516,7 @@ process variantCall {
 /*
 * Step 9 - Generate a YAML file for software versions in the pipeline
 * This is then parsed by MultiQC and the report feature to produce a final report with the software Versions in the pipeline.
-*/ 
+*/
 
 process get_software_versions {
 
@@ -543,7 +542,7 @@ process get_software_versions {
 /**
 * Step 10 - Generate MultiQC config file
 *
-*/ 
+*/
 
 process GenerateMultiQCconfig {
   publishDir "${params.outdir}/MultiQC/", mode: 'copy'
@@ -581,7 +580,7 @@ process GenerateMultiQCconfig {
 
 /*
 * Step 12 - Collect metrics, stats and other resources with MultiQC in a single call
-*/ 
+*/
 
 process multiqc {
     tag "$name"
@@ -608,7 +607,7 @@ process multiqc {
     rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
     rfilename = custom_runName ? "--filename " + custom_runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
     """
-    multiqc -f $rtitle $rfilename --config $multiQCconfig . 
+    multiqc -f $rtitle $rfilename --config $multiQCconfig .
     """
 }
 
@@ -671,4 +670,3 @@ workflow.onError {
   log.info "Workflow execution stopped with the following message:"
   log.info "  " + workflow.errorMessage
 }
-
