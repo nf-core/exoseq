@@ -224,10 +224,28 @@ if(params.notrim){
     trimmed_reads = read_files_trimming
     trimgalore_results = []
     trimgalore_logs = []
+    process trim_galore {
+        tag "$name"
+        publishDir "${params.outdir}/fastqc", mode: 'copy',
+        saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
+
+        input:
+        set val(name), file(reads) from read_files_fastqc
+
+        output:
+        file '*_fastqc.{zip,html}' into fastqc_results
+        file '.command.out' into fastqc_stdout
+
+        script:
+        """
+        fastqc -q $reads
+        """
+    }
 } else {
     process trim_galore {
         tag "$name"
-        publishDir "${params.outdir}/trim_galore", mode: 'copy'
+        publishDir "${params.outdir}/trim_galore", mode: 'copy', 
+        saveAs: {filename -> filename.indexOf(".zip") > 0 ? "fastqc_zips/$filename" : "$filename"}
 
         input:
         set val(name), file(reads) from read_files_trimming
