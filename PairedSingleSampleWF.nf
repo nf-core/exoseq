@@ -217,15 +217,13 @@ if(params.aligner == 'bwa' && !params.bwa_index){
 }
 
 /*
- * STEP 1 - trim with trim galore
- */
+ * 
+ * STEP 0 - FastQC 
+ * 
+*/
 
-if(params.notrim){
-    trimmed_reads = read_files_trimming
-    trimgalore_results = []
-    trimgalore_logs = []
-    process trim_galore {
-        tag "$name"
+process fastqc {
+    tag "$name"
         publishDir "${params.outdir}/fastqc", mode: 'copy',
         saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
 
@@ -240,13 +238,24 @@ if(params.notrim){
         """
         fastqc -q $reads
         """
-    }
+}
+/*
+ * STEP 1 - trim with trim galore
+ */
+
+if(params.notrim){
+    trimmed_reads = read_files_trimming
+    trimgalore_results = []
+    trimgalore_logs = []
 } else {
     process trim_galore {
         tag "$name"
         publishDir "${params.outdir}/trim_galore", mode: 'copy', 
-        saveAs: {filename -> filename.indexOf(".zip") > 0 ? "fastqc_zips/$filename" : "$filename"}
-
+            saveAs: {filename -> 
+                if (filename.indexOf("_fastqc") > 0) "FastQC/$filename"
+                else if (filename.indexOf("trimming_report.txt") > 0) "logs/$filename"
+                else params.saveTrimmed ? filename : null
+            }
         input:
         set val(name), file(reads) from read_files_trimming
 
