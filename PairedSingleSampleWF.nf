@@ -262,7 +262,6 @@ if(params.notrim){
         output:
         set val(name), file(reads) into trimmed_reads
         file '*trimming_report.txt' into trimgalore_results, trimgalore_logs
-        file '*_fastqc.{zip,html}' into fastqc_results
 
 
         script:
