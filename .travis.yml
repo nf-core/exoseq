@@ -30,4 +30,4 @@ script:
   # Run the pipeline
   # Need to download metafiles and kitfiles first, unpack these manually
   - sh ${TRAVIS_BUILD_DIR}/scripts/fetchMetaFiles.sh
-  - nextflow run ${TRAVIS_BUILD_DIR} -profile test,docker --metafiles ./ --kitfiles kits/
+  - nextflow run ${TRAVIS_BUILD_DIR} -profile test,docker --metafiles ./ --kitfiles kits/ --genome 'GRCh37'
