@@ -306,7 +306,7 @@ process bwamem {
     -t ${task.cpus} \\
     $params.gfasta \\
     $reads \\
-    || samtools ${avail_mem} sort -O bam - > $outfile ${name}_bwa.bam
+    | samtools ${avail_mem} sort -O bam - > $outfile ${name}_bwa.bam
     """
 }
 
