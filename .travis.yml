@@ -21,7 +21,7 @@ install:
 
 
 env:
-  - NXF_VER=0.30.1
+  - NXF_VER=0.30.2
   - ''
 
 script:
@@ -29,5 +29,5 @@ script:
   - "nf-core lint ${TRAVIS_BUILD_DIR}"
   # Run the pipeline
   # Need to download metafiles and kitfiles first, unpack these manually
-  - sh ./scripts/fetchMetadata.sh
+  - sh ${TRAVIS_BUILD_DIR}/scripts/fetchMetadata.sh
   - nextflow run ${TRAVIS_BUILD_DIR} -profile test,docker --metafiles ./ --kitfiles kits/
