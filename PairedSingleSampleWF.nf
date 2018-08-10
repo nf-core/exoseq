@@ -215,31 +215,29 @@ if(params.aligner == 'bwa' && !params.bwa_index){
     bwa_index = file("${params.bwa_index}")
 }
 
-
 /*
-* STEP 0 - FastQC
-*
+ * 
+ * STEP 0 - FastQC 
+ * 
 */
 
 process fastqc {
     tag "$name"
-    publishDir "${params.outdir}/fastqc", mode: 'copy',
+        publishDir "${params.outdir}/fastqc", mode: 'copy',
         saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
 
-    input:
-    set val(name), file(reads) from read_files_fastqc
+        input:
+        set val(name), file(reads) from read_files_fastqc
 
-    output:
-    file '*_fastqc.{zip,html}' into fastqc_results
-    file '.command.out' into fastqc_stdout
+        output:
+        file '*_fastqc.{zip,html}' into fastqc_results
+        file '.command.out' into fastqc_stdout
 
-    script:
-    """
-    fastqc -q $reads
-    """
+        script:
+        """
+        fastqc -q $reads
+        """
 }
-
-
 /*
  * STEP 1 - trim with trim galore
  */
@@ -251,14 +249,19 @@ if(params.notrim){
 } else {
     process trim_galore {
         tag "$name"
-        publishDir "${params.outdir}/trim_galore", mode: 'copy'
-
+        publishDir "${params.outdir}/trim_galore", mode: 'copy', 
+            saveAs: {filename -> 
+                if (filename.indexOf("_fastqc") > 0) "FastQC/$filename"
+                else if (filename.indexOf("trimming_report.txt") > 0) "logs/$filename"
+                else params.saveTrimmed ? filename : null
+            }
         input:
         set val(name), file(reads) from read_files_trimming
 
         output:
         set val(name), file(reads) into trimmed_reads
         file '*trimming_report.txt' into trimgalore_results, trimgalore_logs
+
 
         script:
         single = reads instanceof Path
@@ -268,11 +271,11 @@ if(params.notrim){
         tpc_r2 = params.three_prime_clip_r2 > 0 ? "--three_prime_clip_r2 ${params.three_prime_clip_r2}" : ''
         if (params.singleEnd) {
             """
-            trim_galore --gzip $c_r1 $tpc_r1 $reads
+            trim_galore --gzip $c_r1 $tpc_r1 $reads --fastqc
             """
         } else {
             """
-            trim_galore --paired --gzip $c_r1 $c_r2 $tpc_r1 $tpc_r2 $reads
+            trim_galore --paired --gzip $c_r1 $c_r2 $tpc_r1 $tpc_r2 $reads --fastqc
             """
         }
     }
