@@ -95,7 +95,7 @@ if (params.help){
 }
 
 // Check blocks for certain required parameters, to see they are given and exist
-if (!params.reads || !params.genome || !workflow.profile == 'test'){
+if ((!params.reads || !params.genome) && !workflow.profile == 'test'){
     exit 1, "Parameters '--reads' and '--genome' are required to run the pipeline"
 }
 if (!params.kitfiles){
