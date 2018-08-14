@@ -146,7 +146,7 @@ if(params.aligner == 'bwa' ){
 // Create a summary for the logfile
 def summary = [:]
 summary['Run Name']     = custom_runName ?: workflow.runName
-summary['Reads']        = params.reads
+summary['Reads']        = params.reads ?: params.readPaths
 summary['Data Type']    = params.singleEnd ? 'Single-End' : 'Paired-End'
 summary['Genome Assembly']       = params.genome
 summary['Trim R1'] = params.clip_r1
