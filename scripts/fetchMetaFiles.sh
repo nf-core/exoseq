@@ -10,3 +10,4 @@ wget https://github.com/nf-core/test-datasets/raw/exoseq/reference/Mills_and_100
 wget https://github.com/nf-core/test-datasets/raw/exoseq/reference/dbsnp_138.b37.small.vcf.gz
 wget https://github.com/nf-core/test-datasets/raw/exoseq/reference/human_g1k_v37_decoy.small.fasta
 gunzip *.gz
+rm kits.tar.bz2
