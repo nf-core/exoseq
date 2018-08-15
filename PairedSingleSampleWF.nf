@@ -78,8 +78,7 @@ params.clip_r2 = 0
 params.three_prime_clip_r1 = 0
 params.three_prime_clip_r2 = 0
 
-// Kit options
-params.kit = 'agilent_v5'
+
 
 // Has the run name been specified by the user?
 // this has the bonus effect of catching both -name and --name
@@ -87,6 +86,18 @@ custom_runName = params.name
 if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
   custom_runName = workflow.runName
 }
+
+// Kit & Genome options
+params.kit = 'agilent_v5'
+params.bait = params.genomes [ params.genome ].kits [params.kit].bait ?: false
+params.target = params.genomes [ params.genome ].kits [params.kit].target ?: false
+params.target_bed = params.genomes [ params.genome ].kits [params.kit].target_bed ?: false
+params.dbsnp = params.genomes [ params.genome ].dbsnp ?: false
+params.thousandg = params.genomes [ params.genome ].thousandg ?: false
+params.mills = params.genomes [ params.genome ].mills ?: false
+params.omni = params.genomes [ params.genome ].omni ?: false
+params.gfasta = params.genomes [ params.genome ].gfasta ?: false
+params.bwa_index = params.genomes [ params.genome ].bwa_index ?: false
 
 // Show help when needed
 if (params.help){
@@ -149,6 +160,11 @@ summary['Run Name']     = custom_runName ?: workflow.runName
 summary['Reads']        = params.reads ?: params.readPaths
 summary['Data Type']    = params.singleEnd ? 'Single-End' : 'Paired-End'
 summary['Genome Assembly']       = params.genome
+summary['FastA']   = params.genomes [params.genome].gfasta ?: false
+summary['DBSNP']   = params.genomes [params.genome].dbsnp ?: false
+summary['Mills']   = params.genomes [params.genome].mills ?: false
+summary['Omni']    = params.genomes [params.genome].omni ?: false
+summary['1000G']   = params.genomes [params.genome].thousandg ?: false
 summary['Trim R1'] = params.clip_r1
 summary['Trim R2'] = params.clip_r2
 summary["Trim 3' R1"] = params.three_prime_clip_r1
@@ -551,7 +567,7 @@ process get_software_versions {
     samtools --version &> v_samtools.txt
     bwa &> v_bwa.txt 2>&1 || true
     qualimap --version &> v_qualimap.txt
-    gatk-launch BaseRecalibrator --version &> v_gatk.txt
+    gatk BaseRecalibrator --version &> v_gatk.txt
     multiqc --version &> v_multiqc.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
