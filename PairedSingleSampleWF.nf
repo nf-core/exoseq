@@ -257,7 +257,7 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         file fasta from fasta_for_samtools_index
 
         output:
-        file "*.fai" into samtools_index, ch_gfasta_index_for_realign, ch_gfasta_index_for_bqsr, ch_gfasta_index_for_vcall
+        file "*.fai" into samtools_index, ch_gfasta_index_for_realign, ch_gfasta_index_for_bqsr, ch_gfasta_index_for_vcall, ch_gfasta_index_for_metrics
 
         script:
         """
@@ -541,6 +541,7 @@ process picard_hc_metrics {
 
     input:
     file gfasta from ch_gfasta_for_metrics
+    file gfasta_index from ch_gfasta_index_for_metrics
     file target from ch_kit_target_for_metrics
     file bait from ch_kit_targetbait_for_metrics
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_for_hs_metrics
