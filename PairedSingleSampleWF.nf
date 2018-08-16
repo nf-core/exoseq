@@ -254,7 +254,7 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         file fasta from fasta_for_samtools_index
 
         output:
-        file "*.fai" into samtools_index, ch_gfasta_index_for_realign
+        file "*.fai" into samtools_index, ch_gfasta_index_for_realign, ch_gfasta_index_for_bqsr
 
         script:
         """
@@ -451,7 +451,8 @@ process applyBQSR {
     publishDir "${params.outdir}/GATK_ApplyBQSR", mode: 'copy'
 
     input:
-    file(gfasta) from ch_gfasta_for_bqsr
+    file gfasta from ch_gfasta_for_bqsr
+    file gfasta_index from ch_gfasta_index_for_bqsr
     file gfasta_dict from ch_dict_index_for_bqsr
     file target from ch_kit_target_for_bqsr
     set val(name), file("${name}_table.recal") from samples_recal_reports
