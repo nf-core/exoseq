@@ -123,7 +123,7 @@ if(workflow.profile == 'awsbatch'){
 
 //Channelize gfasta into multiple channels for later
 Channel.fromPath(params.gfasta)
-       .into{ch_gfasta_for_bwa_mapping; ch_gfasta_for_recal; ch_gfasta_for_bqsr; ch_gfasta_for_variantcall} 
+       .into{ch_gfasta_for_bwa_mapping; ch_gfasta_for_recal; ch_gfasta_for_bqsr; ch_gfasta_for_variantcall; ch_gfasta_for_multimetrics; ch_gfasta_for_metrics} 
 
 /*
  * Create a channel for input read files
@@ -212,13 +212,13 @@ try {
 
 
 Channel.fromPath("${params.dbsnp}")
-       .into{ch_dbsnp_for_baserecal; ch_dbsnp_for_haplotypecaller}
+       .into{ch_dbsnp_for_baserecal; ch_dbsnp_for_multimetrics;ch_dbsnp_for_haplotypecaller}
 
 Channel.fromPath("${params.target}")
-       .into{ch_kit_target_for_recal; ch_kit_target_for_bqsr; ch_kit_target_for_vcall}
+       .into{ch_kit_target_for_recal; ch_kit_target_for_bqsr; ch_kit_target_for_vcall; ch_kit_target_for_metrics}
 
-Channel.fromPath("${params.target_bed}")
-       .into{ch_kit_targetbed_for_qualimap}
+Channel.fromPath("${params.bait}")
+       .into{ch_kit_targetbait_for_multimetrics; ch_kit_targetbait_for_metrics}
 
 
 // Build BWA Index if this is required
@@ -257,7 +257,7 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         file fasta from fasta_for_samtools_index
 
         output:
-        file "*.fai" into samtools_index, ch_gfasta_index_for_realign, ch_gfasta_index_for_bqsr; ch_gfasta_index_for_vcall
+        file "*.fai" into samtools_index, ch_gfasta_index_for_realign, ch_gfasta_index_for_bqsr, ch_gfasta_index_for_vcall
 
         script:
         """
@@ -478,38 +478,72 @@ process applyBQSR {
 }
 
 /*
- * Step 7 - Determine quality metrics of mapped BAM files using QualiMap 2
- * 
-*/ 
-process qualiMap {
-    tag "${name}"
-    publishDir "${params.outdir}/Qualimap", mode: 'copy'
-    
+ * Generate relevant statistics
+ *
+*/
+
+process picard_multiple_metrics {
+	publishDir "${params.outdir}/Picard/MultipleMetrics", mode: 'copy'
+ 
+	input:
+	set file(bam), file(bai) from bam_for_multiple_metrics
+    file gfasta from ch_gfasta_for_multimetrics
+    file dbsnp from ch_dbsnp_for_multimetrics
+    file bait from ch_kit_targetbait_for_multimetrics
+
+	output:
+	file("${prefix}*") into CollectMultipleMetricsOutput mode flatten
+
+	script:       
+	prefix = "${bam.baseName}"
+
+	"""
+		picard -Xms1G -Xmx${task.memory.toGiga()}G CollectMultipleMetrics \
+		PROGRAM=MeanQualityByCycle \
+		PROGRAM=QualityScoreDistribution \
+		PROGRAM=CollectAlignmentSummaryMetrics \
+		PROGRAM=CollectInsertSizeMetrics\
+       	        PROGRAM=CollectSequencingArtifactMetrics \
+                PROGRAM=CollectQualityYieldMetrics \
+	        PROGRAM=CollectGcBiasMetrics \
+		PROGRAM=CollectBaseDistributionByCycle \
+		INPUT=$bam \
+		REFERENCE_SEQUENCE=$gfasta \
+		DB_SNP=$dbsnp \
+		INTERVALS=$bait \
+		ASSUME_SORTED=true \
+		QUIET=true \
+		OUTPUT=${prefix} \
+		TMP_DIR=tmp
+	"""
+}	
+
+process picard_hc_metrics {
+
+    tag "${patientID}|${sampleID}"
+    publishDir "${params.outdir}/Picard/HcMetrics", mode: 'copy'
+
     input:
-    file targetbed from ch_kit_targetbed_for_qualimap
-    set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
+    file gfasta from ch_gfasta_for_metrics
+    file target from ch_kit_target_for_metrics
+    file bait from ch_kit_targetbait_for_metrics
+    set file(bam), file(bai) from bam_for_hs_metrics
 
     output:
-    file "${name}" into qualimap_results
-    file '.command.log' into qualimap_stdout
+    file(outfile) into HybridCaptureMetricsOutput mode flatten
 
     script:
-    gcref = ''
-    gff = ''
-    if(params.genome == 'GRCh37') gcref = '-gd HUMAN'
-    if(params.genome == 'smallGRCh37') gcref = 'gd HUMAN'
-    if(params.genome == 'GRCm38') gcref = '-gd MOUSE'
-    gff ="-gff $targetbed"
+    outfile = "${bam.baseName}" + "_"+ ".hybrid_selection_metrics.txt"
+
     """
-    qualimap bamqc $gcref \\
-    -bam $realign_bam \\
-    -outdir ${name} \\
-    --skip-duplicated \\
-    --collect-overlap-pairs \\
-    -nt ${task.cpus} \\
-    $gff \\
-    --java-mem-size=${task.memory.toGiga()}G \\
-    """
+        picard -Xms1G -Xmx${task.memory.toGiga()}G CollectHsMetrics \
+               INPUT=$bam \
+               OUTPUT=$outfile \
+               TARGET_INTERVALS=$target \
+               BAIT_INTERVALS=$bait \
+               REFERENCE_SEQUENCE=$gfasta \
+               TMP_DIR=tmp
+        """
 }
 
 /*
@@ -573,7 +607,6 @@ process get_software_versions {
     trim_galore --version &> v_trim_galore.txt
     samtools --version &> v_samtools.txt
     bwa &> v_bwa.txt 2>&1 || true
-    qualimap --version &> v_qualimap.txt
     gatk BaseRecalibrator --version &> v_gatk.txt
     multiqc --version &> v_multiqc.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
@@ -613,7 +646,6 @@ process GenerateMultiQCconfig {
   echo "- 'cutadapt'" >> multiqc_config.yaml
   echo "- 'bwa'" >> multiqc_config.yaml
   echo "- 'samtools'" >> multiqc_config.yaml
-  echo "- 'qualimap'" >> multiqc_config.yaml
   echo "- 'gatk'" >> multiqc_config.yaml
   """
 }
@@ -633,7 +665,6 @@ process multiqc {
     file ('trimgalore/*') from trimgalore_results.toList()
     file ('gatk_base_recalibration/T*') from gatk_base_recalibration_results.toList()
     file ('gatk_picard_duplicates/*') from markdup_results.toList()
-    file ('qualimap/*') from qualimap_results.toList()
     file ('software_versions/*') from software_versions_yaml.toList()
 
 
