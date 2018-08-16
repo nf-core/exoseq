@@ -207,13 +207,19 @@ try {
               "============================================================"
 }
 
-// Build BWA Index if this is required
 
+Channel.fromPath("${params.dbsnp}")
+       .into{ch_dbsnp_for_baserecal; ch_dbsnp_for_haplotypecaller}
+
+
+// Build BWA Index if this is required
 if(params.aligner == 'bwa' && !params.bwa_index){
     // Create Channels
     fasta_for_bwa_index = Channel
         .fromPath("${params.gfasta}")
     fasta_for_samtools_index = Channel
+        .fromPath("${params.gfasta}")
+    fasta_for_dict_index = Channel
         .fromPath("${params.gfasta}")
     // Create a BWA index for non-indexed genomes
     process makeBWAIndex {
@@ -242,11 +248,27 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         file fasta from fasta_for_samtools_index
 
         output:
-        file "*.fai" into samtools_index
+        file "*.fai" into samtools_index, ch_gfasta_index_for_realign
 
         script:
         """
         samtools faidx $fasta
+        """
+    }
+    process makeSeqDict {
+        tag "$params.gfasta"
+        publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
+                   saveAs: { params.saveReference ? it : null }, mode: 'copy'
+        
+        input:
+        file fasta from fasta_for_dict_index
+
+        output:
+        file "*.dict" into ch_dict_index_for_recal, ch_dict_index_for_bqsr, ch_dict_index_for_vcall
+
+        script:
+        """
+        gatk CreateSequenceDictionary --REFERENCE $fasta --OUTPUT "${fasta.baseName}.dict"
         """
     }
 } else {
@@ -394,6 +416,9 @@ process recal_bam_files {
 
     input:
     file gfasta from ch_gfasta_for_recal
+    file gfasta_index from ch_gfasta_index_for_realign
+    file gfasta_dict from ch_dict_index_for_recal
+    file dbsnp from ch_dbsnp_for_baserecal
     set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_markdup_bam
 
     output:
@@ -402,28 +427,16 @@ process recal_bam_files {
     file '.command.log' into gatk_base_recalibration_results
 
     script:
-    if(params.exome){
     """
     gatk BaseRecalibrator \\
         -R $gfasta \\
         -I $markdup_bam \\
         -O ${name}_table.recal \\
         -L $params.target \\
-        --known-sites $params.dbsnp \\
+        --known-sites $dbsnp \\
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
     """
-    } else {
-    """
-    gatk BaseRecalibrator \\
-        -R $gfasta \\
-        -I $markdup_bam \\
-        -O ${name}_table.recal \\
-        --known-sites $params.dbsnp \\
-        --verbosity INFO \\
-        --java-options -Xmx${task.memory.toGiga()}g
-    """    
-    }
 }
 
 process applyBQSR {
@@ -432,6 +445,7 @@ process applyBQSR {
 
     input:
     file(gfasta) from ch_gfasta_for_bqsr
+    file gfasta_dict from ch_dict_index_for_bqsr
     set val(name), file("${name}_table.recal") from samples_recal_reports
     set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_for_applyBQSR
 
@@ -508,13 +522,14 @@ process variantCall {
 
     input:
     file(gfasta) from ch_gfasta_for_variantcall
+    file gfasta_dict from ch_dict_index_for_vcall
+    file dbsnp from ch_dbsnp_for_haplotypecaller
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_vcall
 
     output:
     set val(name), file("${name}_variants.vcf"), file("${name}_variants.vcf.idx") into raw_variants
 
     script:
-    if(params.exome){
     """
     gatk HaplotypeCaller \\
         -I $realign_bam \\
@@ -529,29 +544,10 @@ process variantCall {
         --annotation RMSMappingQuality \\
         --annotation FisherStrand \\
         --annotation Coverage \\
-        --dbsnp $params.dbsnp \\
+        --dbsnp $dbsnp \\
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
     """
-    } else { //We have a winner (genome)
-    """
-    gatk HaplotypeCaller \\
-        -I $realign_bam \\
-        -R $gfasta \\
-        -O ${name}_variants.vcf \\
-        -ERC GVCF \\
-        --create-output-variant-index \\
-        --annotation MappingQualityRankSumTest \\
-        --annotation QualByDepth \\
-        --annotation ReadPosRankSumTest \\
-        --annotation RMSMappingQuality \\
-        --annotation FisherStrand \\
-        --annotation Coverage \\
-        --dbsnp $params.dbsnp \\
-        --verbosity INFO \\
-        --java-options -Xmx${task.memory.toGiga()}g
-    """    
-    }
 }
 
 
