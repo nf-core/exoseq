@@ -462,7 +462,7 @@ process applyBQSR {
     set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_for_applyBQSR
 
     output:
-    set val(name), file("${name}.bam"), file("${name}.bai") into bam_vcall, bam_metrics
+    set val(name), file("${name}.bam"), file("${name}.bai") into bam_vcall, bam_for_multiple_metrics, bam_for_hs_metrics
 
     script:
     """
