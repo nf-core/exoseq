@@ -157,7 +157,6 @@ if(params.aligner == 'bwa' ){
         .ifEmpty { exit 1, "BWA index not found: ${params.gfasta}.bwt" }
 }
 
-
 // Create a summary for the logfile
 def summary = [:]
 summary['Run Name']     = custom_runName ?: workflow.runName
@@ -214,6 +213,9 @@ try {
 
 Channel.fromPath("${params.dbsnp}")
        .into{ch_dbsnp_for_baserecal; ch_dbsnp_for_haplotypecaller}
+
+Channel.fromPath("${params.target}")
+       .into{ch_kit_target_for_recal; ch_kit_target_for_bqsr}
 
 
 // Build BWA Index if this is required
@@ -423,6 +425,7 @@ process recal_bam_files {
     file gfasta_index from ch_gfasta_index_for_realign
     file gfasta_dict from ch_dict_index_for_recal
     file dbsnp from ch_dbsnp_for_baserecal
+    file target from ch_kit_target_for_recal
     set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_markdup_bam
 
     output:
@@ -436,7 +439,7 @@ process recal_bam_files {
         -R $gfasta \\
         -I $markdup_bam \\
         -O ${name}_table.recal \\
-        -L $params.target \\
+        -L $target \\
         --known-sites $dbsnp \\
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
@@ -450,6 +453,7 @@ process applyBQSR {
     input:
     file(gfasta) from ch_gfasta_for_bqsr
     file gfasta_dict from ch_dict_index_for_bqsr
+    file target from ch_kit_target_for_bqsr
     set val(name), file("${name}_table.recal") from samples_recal_reports
     set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_for_applyBQSR
 
@@ -457,7 +461,6 @@ process applyBQSR {
     set val(name), file("${name}.bam"), file("${name}.bai") into bam_vcall, bam_metrics
 
     script:
-    if(params.exome){
     """
     gatk ApplyBQSR \\
         -R $gfasta \\
@@ -468,18 +471,6 @@ process applyBQSR {
         --create-output-bam-index true \\
         --java-options -Xmx${task.memory.toGiga()}g
     """
-    } else {
-    """
-    gatk ApplyBQSR \\
-        -R $gfasta \\
-        -I $markdup_bam \\
-        --bqsr-recal-file ${name}_table.recal \\
-        -O ${name}.bam \\
-        --create-output-bam-index true \\
-        --java-options -Xmx${task.memory.toGiga()}g
-    """    
-    }
-
 }
 
 /*
