@@ -492,7 +492,7 @@ process picard_multiple_metrics {
     file bait from ch_kit_targetbait_for_multimetrics
 
 	output:
-	file("${prefix}*") into CollectMultipleMetricsOutput mode flatten
+	file("${prefix}*") into ch_collect_multiple_metrics_output
 
 	script:       
 	prefix = "${bam.baseName}"
@@ -530,7 +530,7 @@ process picard_hc_metrics {
     set file(bam), file(bai) from bam_for_hs_metrics
 
     output:
-    file(outfile) into HybridCaptureMetricsOutput mode flatten
+    file(outfile) into ch_hybrid_capture_metrics
 
     script:
     outfile = "${bam.baseName}" + "_"+ ".hybrid_selection_metrics.txt"
@@ -666,6 +666,8 @@ process multiqc {
     file ('gatk_base_recalibration/T*') from gatk_base_recalibration_results.toList()
     file ('gatk_picard_duplicates/*') from markdup_results.toList()
     file ('software_versions/*') from software_versions_yaml.toList()
+    file ('*') from ch_collect_multiple_metrics_output.toList()
+    file ('*') from ch_hybrid_capture_metrics.toList()
 
 
     output:
