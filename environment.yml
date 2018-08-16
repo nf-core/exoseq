@@ -13,5 +13,4 @@ dependencies:
   - samtools=1.9
   - bwa=0.7.8
   - gatk4=4.0.7.0
-  - qualimap=2.2.2a
   - multiqc=1.6
