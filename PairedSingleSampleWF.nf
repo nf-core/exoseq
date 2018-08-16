@@ -280,6 +280,23 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         gatk CreateSequenceDictionary --REFERENCE $fasta --OUTPUT "${fasta.baseName}.dict"
         """
     }
+
+    process buildVCFIndex {
+        publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
+                   saveAs: { params.saveReference ? it : null }, mode: 'copy'
+
+        input:
+        file(f_reference) from ch_vcfFile
+
+        output:
+        file("${f_reference}.idx") into ch_vcfIndex
+
+        script:
+        """
+        igvtools index ${f_reference}
+        """
+}
+
 } else {
     bwa_index = file("${params.bwa_index}")
 }
@@ -508,6 +525,7 @@ process picard_multiple_metrics {
 		--PROGRAM CollectBaseDistributionByCycle \
 		--INPUT $realign_bam \
 		--DB_SNP $dbsnp \
+        --REFERENCE_SEQUENCE $gfasta \
 		--INTERVALS $bait \
 		--ASSUME_SORTED true \
 		--QUIET true \
@@ -534,12 +552,12 @@ process picard_hc_metrics {
 
     """
         gatk CollectHsMetrics \
-               INPUT=$realign_bam \
-               OUTPUT=$outfile \
-               TARGET_INTERVALS=$target \
-               BAIT_INTERVALS=$bait \
-               REFERENCE_SEQUENCE=$gfasta \
-               TMP_DIR=tmp \
+               --INPUT $realign_bam \
+               --OUTPUT $outfile \
+               --TARGET_INTERVALS $target \
+               --BAIT_INTERVALS $bait \
+               --REFERENCE_SEQUENCE $gfasta \
+               --TMP_DIR tmp \
                --java-options -Xmx${task.memory.toGiga()}g
         """
 }

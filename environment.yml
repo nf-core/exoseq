@@ -13,4 +13,5 @@ dependencies:
   - samtools=1.9
   - bwa=0.7.8
   - gatk4=4.0.7.0
+  - igvtools=2.3.93
   - multiqc=1.6
