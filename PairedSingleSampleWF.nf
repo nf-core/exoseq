@@ -468,7 +468,7 @@ process applyBQSR {
         -I $markdup_bam \\
         --bqsr-recal-file ${name}_table.recal \\
         -O ${name}.bam \\
-        -L $params.target \\
+        -L $target \\
         --create-output-bam-index true \\
         --java-options -Xmx${task.memory.toGiga()}g
     """
