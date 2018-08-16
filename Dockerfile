@@ -4,4 +4,5 @@ LABEL authors="alexander.peltzer@qbic.uni-tuebingen.de, senthilkumar.paneerselva
 description="Docker image containing all requirements for the nfcore/ExoSeq pipeline."
 
 COPY environment.yml /
-RUN conda env update -n root -f /environment.yml && conda clean -a
+RUN conda env create -f /environment.yml && conda clean -a
+ENV PATH /opt/conda/envs/nfcore-exoseq-1.0dev/bin:$PATH
