@@ -121,6 +121,10 @@ if(workflow.profile == 'awsbatch'){
     if (!workflow.workDir.startsWith('s3') || !params.outdir.startsWith('s3')) exit 1, "Specify S3 URLs for workDir and outdir parameters on AWSBatch!"
 }
 
+//Channelize gfasta into multiple channels for later
+Channel.from(params.gfasta)
+       .into {ch_gfasta_for_bwa_mapping, ch_gfasta_for_recal, ch_gfasta_for_bqsr, ch_gfasta_for_variantcall} 
+
 /*
  * Create a channel for input read files
  */
@@ -221,7 +225,7 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         file fasta from fasta_for_bwa_index
 
         output:
-        file "*.{amb,ann,bwt,pac,sa}" into bwa_index
+        file "*.{amb,ann,bwt,pac,sa,fasta}" into bwa_index
 
         script:
         """
@@ -323,6 +327,7 @@ process bwamem {
     input:
     set val(name), file(reads) from trimmed_reads
     file(bwa_index) from bwa_index
+    file(gfasta) from ch_gfasta_for_bwa_mapping
 
     output:
     set val(name), file("${name}_bwa.bam") into samples_sorted_bam
@@ -337,9 +342,9 @@ process bwamem {
     bwa mem \\
     -R $rg \\
     -t ${task.cpus} \\
-    $params.gfasta \\
+    $gfasta \\
     $reads \\
-    | samtools ${avail_mem} sort -O bam - > $outfile ${name}_bwa.bam
+    | samtools sort ${avail_mem} -O bam - > ${name}_bwa.bam
     """
 }
 
@@ -392,6 +397,7 @@ process recal_bam_files {
 
     output:
     set val(name), file("${name}_table.recal") into samples_recal_reports
+    file gfasta from ch_gfasta_for_recal
     file '.command.log' into gatk_stdout
     file '.command.log' into gatk_base_recalibration_results
 
@@ -399,7 +405,7 @@ process recal_bam_files {
     if(params.exome){
     """
     gatk-launch BaseRecalibrator \\
-        -R $params.gfasta \\
+        -R $gfasta \\
         -I $markdup_bam \\
         -O ${name}_table.recal \\
         -L $params.target \\
@@ -410,7 +416,7 @@ process recal_bam_files {
     } else {
     """
     gatk-launch BaseRecalibrator \\
-        -R $params.gfasta \\
+        -R $gfasta \\
         -I $markdup_bam \\
         -O ${name}_table.recal \\
         --known-sites $params.dbsnp \\
@@ -425,6 +431,7 @@ process applyBQSR {
     publishDir "${params.outdir}/GATK_ApplyBQSR", mode: 'copy'
 
     input:
+    file(gfasta) from ch_gfasta_for_bqsr
     set val(name), file("${name}_table.recal") from samples_recal_reports
     set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_for_applyBQSR
 
@@ -435,7 +442,7 @@ process applyBQSR {
     if(params.exome){
     """
     gatk-launch ApplyBQSR \\
-        -R $params.gfasta \\
+        -R $gfasta \\
         -I $markdup_bam \\
         --bqsr-recal-file ${name}_table.recal \\
         -O ${name}.bam \\
@@ -446,7 +453,7 @@ process applyBQSR {
     } else {
     """
     gatk-launch ApplyBQSR \\
-        -R $params.gfasta \\
+        -R $gfasta \\
         -I $markdup_bam \\
         --bqsr-recal-file ${name}_table.recal \\
         -O ${name}.bam \\
@@ -500,6 +507,7 @@ process variantCall {
         saveAs: {filename -> filename.replaceFirst(/variants/, "raw_variants")}
 
     input:
+    file(gfasta) from ch_gfasta_for_variantcall
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_vcall
 
     output:
@@ -510,7 +518,7 @@ process variantCall {
     """
     gatk-launch HaplotypeCaller \\
         -I $realign_bam \\
-        -R $params.gfasta \\
+        -R $gfasta \\
         -O ${name}_variants.vcf \\
         -ERC GVCF \\
         -L $params.target \\
@@ -529,7 +537,7 @@ process variantCall {
     """
     gatk-launch HaplotypeCaller \\
         -I $realign_bam \\
-        -R $params.gfasta \\
+        -R $gfasta \\
         -O ${name}_variants.vcf \\
         -ERC GVCF \\
         --create-output-variant-index \\
