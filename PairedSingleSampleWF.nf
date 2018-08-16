@@ -486,7 +486,7 @@ process picard_multiple_metrics {
 	publishDir "${params.outdir}/Picard/MultipleMetrics", mode: 'copy'
  
 	input:
-	set file(bam), file(bai) from bam_for_multiple_metrics
+    set val(name), file(realign_bam), file(realign_bam_ind) from bam_for_multiple_metrics
     file gfasta from ch_gfasta_for_multimetrics
     file dbsnp from ch_dbsnp_for_multimetrics
     file bait from ch_kit_targetbait_for_multimetrics
@@ -507,7 +507,7 @@ process picard_multiple_metrics {
                 PROGRAM=CollectQualityYieldMetrics \
 	        PROGRAM=CollectGcBiasMetrics \
 		PROGRAM=CollectBaseDistributionByCycle \
-		INPUT=$bam \
+		INPUT=$realign_bam \
 		REFERENCE_SEQUENCE=$gfasta \
 		DB_SNP=$dbsnp \
 		INTERVALS=$bait \
@@ -520,25 +520,23 @@ process picard_multiple_metrics {
 }	
 
 process picard_hc_metrics {
-
-    tag "${patientID}|${sampleID}"
     publishDir "${params.outdir}/Picard/HcMetrics", mode: 'copy'
 
     input:
     file gfasta from ch_gfasta_for_metrics
     file target from ch_kit_target_for_metrics
     file bait from ch_kit_targetbait_for_metrics
-    set file(bam), file(bai) from bam_for_hs_metrics
+    set val(name), file(realign_bam), file(realign_bam_ind) from bam_for_hs_metrics
 
     output:
     file(outfile) into ch_hybrid_capture_metrics
 
     script:
-    outfile = "${bam.baseName}" + "_"+ ".hybrid_selection_metrics.txt"
+    outfile = "${name}" + "_"+ ".hybrid_selection_metrics.txt"
 
     """
         gatk CollectHsMetrics \
-               INPUT=$bam \
+               INPUT=$realign_bam \
                OUTPUT=$outfile \
                TARGET_INTERVALS=$target \
                BAIT_INTERVALS=$bait \
