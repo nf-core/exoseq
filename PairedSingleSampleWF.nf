@@ -215,7 +215,10 @@ Channel.fromPath("${params.dbsnp}")
        .into{ch_dbsnp_for_baserecal; ch_dbsnp_for_haplotypecaller}
 
 Channel.fromPath("${params.target}")
-       .into{ch_kit_target_for_recal; ch_kit_target_for_bqsr}
+       .into{ch_kit_target_for_recal; ch_kit_target_for_bqsr; ch_kit_target_for_vcall}
+
+Channel.fromPath("${params.target_bed}")
+       .into{ch_kit_targetbed_for_qualimap}
 
 
 // Build BWA Index if this is required
@@ -254,7 +257,7 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         file fasta from fasta_for_samtools_index
 
         output:
-        file "*.fai" into samtools_index, ch_gfasta_index_for_realign, ch_gfasta_index_for_bqsr
+        file "*.fai" into samtools_index, ch_gfasta_index_for_realign, ch_gfasta_index_for_bqsr; ch_gfasta_index_for_vcall
 
         script:
         """
@@ -483,6 +486,7 @@ process qualiMap {
     publishDir "${params.outdir}/Qualimap", mode: 'copy'
     
     input:
+    file targetbed from ch_kit_targetbed_for_qualimap
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
 
     output:
@@ -493,8 +497,9 @@ process qualiMap {
     gcref = ''
     gff = ''
     if(params.genome == 'GRCh37') gcref = '-gd HUMAN'
+    if(params.genome == 'smallGRCh37') gcref = 'gd HUMAN'
     if(params.genome == 'GRCm38') gcref = '-gd MOUSE'
-    if(params.exome) gff ="-gff ${params.target_bed}"
+    gff ="-gff $targetbed"
     """
     qualimap bamqc $gcref \\
     -bam $realign_bam \\
@@ -517,9 +522,11 @@ process variantCall {
         saveAs: {filename -> filename.replaceFirst(/variants/, "raw_variants")}
 
     input:
-    file(gfasta) from ch_gfasta_for_variantcall
+    file gfasta from ch_gfasta_for_variantcall
+    file gfasta_index from ch_gfasta_index_for_vcall
     file gfasta_dict from ch_dict_index_for_vcall
     file dbsnp from ch_dbsnp_for_haplotypecaller
+    file target from ch_kit_target_for_vcall
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_vcall
 
     output:
@@ -532,7 +539,7 @@ process variantCall {
         -R $gfasta \\
         -O ${name}_variants.vcf \\
         -ERC GVCF \\
-        -L $params.target \\
+        -L $target \\
         --create-output-variant-index \\
         --annotation MappingQualityRankSumTest \\
         --annotation QualByDepth \\
