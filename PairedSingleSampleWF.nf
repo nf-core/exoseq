@@ -122,8 +122,8 @@ if(workflow.profile == 'awsbatch'){
 }
 
 //Channelize gfasta into multiple channels for later
-Channel.from(params.gfasta)
-       .into {ch_gfasta_for_bwa_mapping, ch_gfasta_for_recal, ch_gfasta_for_bqsr, ch_gfasta_for_variantcall} 
+Channel.fromPath(params.gfasta)
+       .into{ch_gfasta_for_bwa_mapping; ch_gfasta_for_recal; ch_gfasta_for_bqsr; ch_gfasta_for_variantcall} 
 
 /*
  * Create a channel for input read files
@@ -369,7 +369,7 @@ process markDuplicates {
     script:
     """
         mkdir `pwd`/tmp
-        gatk-launch MarkDuplicates \\
+        gatk MarkDuplicates \\
         --INPUT $sorted_bam \\
         --OUTPUT ${name}_markdup.bam \\
         --METRICS_FILE ${name}.dup_metrics \\
@@ -393,18 +393,18 @@ process recal_bam_files {
 
 
     input:
+    file gfasta from ch_gfasta_for_recal
     set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_markdup_bam
 
     output:
     set val(name), file("${name}_table.recal") into samples_recal_reports
-    file gfasta from ch_gfasta_for_recal
     file '.command.log' into gatk_stdout
     file '.command.log' into gatk_base_recalibration_results
 
     script:
     if(params.exome){
     """
-    gatk-launch BaseRecalibrator \\
+    gatk BaseRecalibrator \\
         -R $gfasta \\
         -I $markdup_bam \\
         -O ${name}_table.recal \\
@@ -415,7 +415,7 @@ process recal_bam_files {
     """
     } else {
     """
-    gatk-launch BaseRecalibrator \\
+    gatk BaseRecalibrator \\
         -R $gfasta \\
         -I $markdup_bam \\
         -O ${name}_table.recal \\
@@ -441,7 +441,7 @@ process applyBQSR {
     script:
     if(params.exome){
     """
-    gatk-launch ApplyBQSR \\
+    gatk ApplyBQSR \\
         -R $gfasta \\
         -I $markdup_bam \\
         --bqsr-recal-file ${name}_table.recal \\
@@ -452,7 +452,7 @@ process applyBQSR {
     """
     } else {
     """
-    gatk-launch ApplyBQSR \\
+    gatk ApplyBQSR \\
         -R $gfasta \\
         -I $markdup_bam \\
         --bqsr-recal-file ${name}_table.recal \\
@@ -516,7 +516,7 @@ process variantCall {
     script:
     if(params.exome){
     """
-    gatk-launch HaplotypeCaller \\
+    gatk HaplotypeCaller \\
         -I $realign_bam \\
         -R $gfasta \\
         -O ${name}_variants.vcf \\
@@ -535,7 +535,7 @@ process variantCall {
     """
     } else { //We have a winner (genome)
     """
-    gatk-launch HaplotypeCaller \\
+    gatk HaplotypeCaller \\
         -I $realign_bam \\
         -R $gfasta \\
         -O ${name}_variants.vcf \\
