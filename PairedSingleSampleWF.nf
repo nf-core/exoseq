@@ -498,7 +498,7 @@ process picard_multiple_metrics {
 	prefix = "${bam.baseName}"
 
 	"""
-		picard -Xms1G -Xmx${task.memory.toGiga()}G CollectMultipleMetrics \
+		gatk CollectMultipleMetrics \
 		PROGRAM=MeanQualityByCycle \
 		PROGRAM=QualityScoreDistribution \
 		PROGRAM=CollectAlignmentSummaryMetrics \
@@ -514,7 +514,8 @@ process picard_multiple_metrics {
 		ASSUME_SORTED=true \
 		QUIET=true \
 		OUTPUT=${prefix} \
-		TMP_DIR=tmp
+		TMP_DIR=tmp \
+        --java-options -Xmx${task.memory.toGiga()}g
 	"""
 }	
 
@@ -536,13 +537,14 @@ process picard_hc_metrics {
     outfile = "${bam.baseName}" + "_"+ ".hybrid_selection_metrics.txt"
 
     """
-        picard -Xms1G -Xmx${task.memory.toGiga()}G CollectHsMetrics \
+        gatk CollectHsMetrics \
                INPUT=$bam \
                OUTPUT=$outfile \
                TARGET_INTERVALS=$target \
                BAIT_INTERVALS=$bait \
                REFERENCE_SEQUENCE=$gfasta \
-               TMP_DIR=tmp
+               TMP_DIR=tmp \
+               --java-options -Xmx${task.memory.toGiga()}g
         """
 }
 
