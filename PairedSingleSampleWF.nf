@@ -212,7 +212,7 @@ try {
 
 
 Channel.fromPath("${params.dbsnp}")
-       .into{ch_dbsnp_for_baserecal; ch_dbsnp_for_multimetrics;ch_dbsnp_for_haplotypecaller}
+       .into{ch_dbsnp_for_baserecal; ch_dbsnp_for_multimetrics;ch_dbsnp_for_haplotypecaller; ch_dbsnp_for_vcf_index}
 
 Channel.fromPath("${params.target}")
        .into{ch_kit_target_for_recal; ch_kit_target_for_bqsr; ch_kit_target_for_vcall; ch_kit_target_for_metrics}
@@ -286,10 +286,10 @@ if(params.aligner == 'bwa' && !params.bwa_index){
                    saveAs: { params.saveReference ? it : null }, mode: 'copy'
 
         input:
-        file(f_reference) from ch_vcfFile
+        file(f_reference) from ch_dbsnp_for_vcf_index
 
         output:
-        file("${f_reference}.idx") into ch_vcfIndex
+        file("${f_reference}.idx") into ch_dbsnp_vcf_index
 
         script:
         """
@@ -504,6 +504,7 @@ process picard_multiple_metrics {
  
 	input:
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_for_multiple_metrics
+    file vcfidx from ch_dbsnp_vcf_index
     file gfasta from ch_gfasta_for_multimetrics
     file dbsnp from ch_dbsnp_for_multimetrics
     file bait from ch_kit_targetbait_for_multimetrics
