@@ -495,26 +495,24 @@ process picard_multiple_metrics {
 	file("${prefix}*") into ch_collect_multiple_metrics_output
 
 	script:       
-	prefix = "${bam.baseName}"
 
 	"""
 		gatk CollectMultipleMetrics \
-		PROGRAM=MeanQualityByCycle \
-		PROGRAM=QualityScoreDistribution \
-		PROGRAM=CollectAlignmentSummaryMetrics \
-		PROGRAM=CollectInsertSizeMetrics\
-       	        PROGRAM=CollectSequencingArtifactMetrics \
-                PROGRAM=CollectQualityYieldMetrics \
-	        PROGRAM=CollectGcBiasMetrics \
-		PROGRAM=CollectBaseDistributionByCycle \
-		INPUT=$realign_bam \
-		REFERENCE_SEQUENCE=$gfasta \
-		DB_SNP=$dbsnp \
-		INTERVALS=$bait \
-		ASSUME_SORTED=true \
-		QUIET=true \
-		OUTPUT=${prefix} \
-		TMP_DIR=tmp \
+		--PROGRAM MeanQualityByCycle \
+		--PROGRAM QualityScoreDistribution \
+		--PROGRAM CollectAlignmentSummaryMetrics \
+		--PROGRAM CollectInsertSizeMetrics\
+       	--PROGRAM CollectSequencingArtifactMetrics \
+        --PROGRAM CollectQualityYieldMetrics \
+	    --PROGRAM CollectGcBiasMetrics \
+		--PROGRAM CollectBaseDistributionByCycle \
+		--INPUT $realign_bam \
+		--DB_SNP $dbsnp \
+		--INTERVALS $bait \
+		--ASSUME_SORTED true \
+		--QUIET true \
+		--OUTPUT ${name} \
+		--TMP_DIR tmp \
         --java-options -Xmx${task.memory.toGiga()}g
 	"""
 }	
