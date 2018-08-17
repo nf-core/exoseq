@@ -35,18 +35,17 @@ This is a typical usage where the required parameters (with no defaults) were
 given. The available paramaters are listed below based on category
 
 Required parameters:
-    --reads                        Absolute path to project directory
-    --genome                       Name of iGenomes reference
+    --reads                       Absolute path to project directory
+    --genome                      Name of iGenomes reference
 
 Output:
-    --outdir                       Path where the results to be saved [Default: './results']
-    --outdir                      The output directory where the results will be saved
+    --outdir                      Path where the results to be saved [Default: './results']
     -w/--work-dir                 The temporary directory where intermediate data will be saved
 
 Kit files:
-    --kitfiles                     Path to kitfiles defined in metafiles.config
-    --metafiles                    Path to metafiles defined in metafiles.config
-    --kit                          Kit used to prep samples [Default: 'agilent_v5']
+    --kitfiles                    Path to kitfiles defined in metafiles.config
+    --metafiles                   Path to metafiles defined in metafiles.config
+    --kit                         Kit used to prep samples [Default: 'agilent_v5']
 
 AWSBatch options:
     --awsqueue                    The AWSBatch JobQueue that needs to be set when running on AWSBatch
@@ -61,7 +60,7 @@ params.help = false
 params.reads = false
 params.singleEnd = false
 params.run_id = false
-params.aligner = 'bwa' //Default, but stay tuned for later ;-) 
+params.aligner = 'bwa' //Default, but stay tuned for later ;-)
 params.saveReference = true
 
 
@@ -252,7 +251,7 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         tag "$params.gfasta"
         publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
                    saveAs: { params.saveReference ? it : null }, mode: 'copy'
-        
+
         input:
         file fasta from fasta_for_samtools_index
 
@@ -301,31 +300,29 @@ if(params.aligner == 'bwa' && !params.bwa_index){
     bwa_index = file("${params.bwa_index}")
 }
 
-
 /*
-* STEP 0 - FastQC
-*
+ * 
+ * STEP 0 - FastQC 
+ * 
 */
 
 process fastqc {
     tag "$name"
-    publishDir "${params.outdir}/fastqc", mode: 'copy',
+        publishDir "${params.outdir}/fastqc", mode: 'copy',
         saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
 
-    input:
-    set val(name), file(reads) from read_files_fastqc
+        input:
+        set val(name), file(reads) from read_files_fastqc
 
-    output:
-    file '*_fastqc.{zip,html}' into fastqc_results
-    file '.command.out' into fastqc_stdout
+        output:
+        file '*_fastqc.{zip,html}' into fastqc_results
+        file '.command.out' into fastqc_stdout
 
-    script:
-    """
-    fastqc -q $reads
-    """
+        script:
+        """
+        fastqc -q $reads
+        """
 }
-
-
 /*
  * STEP 1 - trim with trim galore
  */
@@ -337,14 +334,19 @@ if(params.notrim){
 } else {
     process trim_galore {
         tag "$name"
-        publishDir "${params.outdir}/trim_galore", mode: 'copy'
-
+        publishDir "${params.outdir}/trim_galore", mode: 'copy', 
+            saveAs: {filename -> 
+                if (filename.indexOf("_fastqc") > 0) "FastQC/$filename"
+                else if (filename.indexOf("trimming_report.txt") > 0) "logs/$filename"
+                else params.saveTrimmed ? filename : null
+            }
         input:
         set val(name), file(reads) from read_files_trimming
 
         output:
         set val(name), file(reads) into trimmed_reads
         file '*trimming_report.txt' into trimgalore_results, trimgalore_logs
+
 
         script:
         single = reads instanceof Path
@@ -354,11 +356,11 @@ if(params.notrim){
         tpc_r2 = params.three_prime_clip_r2 > 0 ? "--three_prime_clip_r2 ${params.three_prime_clip_r2}" : ''
         if (params.singleEnd) {
             """
-            trim_galore --gzip $c_r1 $tpc_r1 $reads
+            trim_galore --gzip $c_r1 $tpc_r1 $reads --fastqc
             """
         } else {
             """
-            trim_galore --paired --gzip $c_r1 $c_r2 $tpc_r1 $tpc_r2 $reads
+            trim_galore --paired --gzip $c_r1 $c_r2 $tpc_r1 $tpc_r2 $reads --fastqc
             """
         }
     }
@@ -399,7 +401,7 @@ process bwamem {
 
 /*
 *  STEP 4 - Mark PCR duplicates in sorted BAM file
-*/ 
+*/
 
 process markDuplicates {
     tag "${name}"
@@ -433,8 +435,8 @@ process markDuplicates {
 
 /*
  * Step 5 - Recalibrate BAM file with known variants and BaseRecalibrator
- * 
-*/ 
+ *
+*/
 process recal_bam_files {
     tag "${name}"
     publishDir "${params.outdir}/GATK_Recalibration", mode: 'copy'
@@ -567,8 +569,8 @@ process picard_hc_metrics {
 
 /*
  * Step 8 - Call Variants with HaplotypeCaller in GVCF mode (differentiate between exome and whole genome data here)
- * 
-*/ 
+ *
+*/
 process variantCall {
     tag "${name}"
     publishDir "${params.outdir}/GATK_VariantCalling/", mode: 'copy',
@@ -610,7 +612,7 @@ process variantCall {
 /*
 * Step 9 - Generate a YAML file for software versions in the pipeline
 * This is then parsed by MultiQC and the report feature to produce a final report with the software Versions in the pipeline.
-*/ 
+*/
 
 process get_software_versions {
 
@@ -635,7 +637,7 @@ process get_software_versions {
 /**
 * Step 10 - Generate MultiQC config file
 *
-*/ 
+*/
 
 process GenerateMultiQCconfig {
   publishDir "${params.outdir}/MultiQC/", mode: 'copy'
@@ -672,7 +674,7 @@ process GenerateMultiQCconfig {
 
 /*
 * Step 12 - Collect metrics, stats and other resources with MultiQC in a single call
-*/ 
+*/
 
 process multiqc {
     tag "$name"
@@ -700,7 +702,7 @@ process multiqc {
     rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
     rfilename = custom_runName ? "--filename " + custom_runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
     """
-    multiqc -f $rtitle $rfilename --config $multiQCconfig . 
+    multiqc -f $rtitle $rfilename --config $multiQCconfig .
     """
 }
 
@@ -763,4 +765,3 @@ workflow.onError {
   log.info "Workflow execution stopped with the following message:"
   log.info "  " + workflow.errorMessage
 }
-
