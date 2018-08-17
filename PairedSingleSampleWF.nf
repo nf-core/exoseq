@@ -498,6 +498,7 @@ process applyBQSR {
  * Generate relevant statistics
  *
 */
+//TODO MAYBE STILL USE QUALIMAP BUT UPDATE IT TO USE BED 3 too? 
 
 process picard_multiple_metrics {
 	publishDir "${params.outdir}/Picard/MultipleMetrics", mode: 'copy'
