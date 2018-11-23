@@ -7,7 +7,7 @@ Bootstrap:docker
     VERSION 1.0dev
 
 %environment
-    PATH=/opt/conda/envs/nf-core-exoseq-1.0dev/bin:$PATH
+    PATH=/opt/conda/envs/nfcore-exoseq-1.0dev/bin:$PATH
     export PATH
 
 %files
