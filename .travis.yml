@@ -1,35 +1,34 @@
 sudo: required
 language: java
 jdk: openjdk8
-services:
-  - docker
-python:
-  - "2.7"
+services: docker
 
-cache: pip
-
-matrix:
-  fast_finish: true
+before_install: docker pull nfcore/exoseq:latest
 
 install:
-  - "./scripts/install.sh --tool $TOOL_INSTALL"
+  # Install Nextflow
+  - mkdir /tmp/nextflow
+  - cd /tmp/nextflow
+  - wget -qO- get.nextflow.io | bash
+  - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
   # Install nf-core/tools
   - git clone https://github.com/nf-core/tools.git /tmp/nf-core-tools
   - cd /tmp/nf-core-tools
   - pip install --user -e .
-  # Get Kit Files
-  - wget -O kits.tar.bz2 https://qbic-intranet.am10.uni-tuebingen.de/owncloud/index.php/s/Qvku3etEqb3PW58/download
-  # Get tiny Reference Files
-  # Reset
+  # Make test directories
+  - mkdir ${TRAVIS_BUILD_DIR}/tests
   - cd ${TRAVIS_BUILD_DIR}/tests
 
+
 env:
-  global:
-    - NXF_VER=0.27.6 SGT_VER=2.4.2
-  matrix:
-    - PROFILE=docker TEST=TOOLS TOOL_INSTALL=ALL
-    - PROFILE=singularity TEST=TOOLS TOOL_INSTALL=ALL
+  - NXF_VER=0.30.2
+  - ''
 
 script:
+  # Lint the pipeline code
   - "nf-core lint ${TRAVIS_BUILD_DIR}"
-  - "./scripts/test.sh --profile $PROFILE --test $TEST"
+  # Run the pipeline
+  # Need to download metafiles and kitfiles first, unpack these manually
+  - sh ${TRAVIS_BUILD_DIR}/scripts/fetchMetaFiles.sh
+  - ls -l
+  - nextflow run ${TRAVIS_BUILD_DIR} -profile test,docker --metafiles ./ --kitfiles kits/ --genome 'smallGRCh37'

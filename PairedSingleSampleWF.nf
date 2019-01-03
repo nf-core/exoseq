@@ -77,8 +77,7 @@ params.clip_r2 = 0
 params.three_prime_clip_r1 = 0
 params.three_prime_clip_r2 = 0
 
-// Kit options
-params.kit = 'agilent_v5'
+
 
 // Has the run name been specified by the user?
 // this has the bonus effect of catching both -name and --name
@@ -87,6 +86,18 @@ if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
   custom_runName = workflow.runName
 }
 
+// Kit & Genome options
+params.kit = 'agilent_v5'
+params.bait = params.genomes [ params.genome ].kits [params.kit].bait ?: false
+params.target = params.genomes [ params.genome ].kits [params.kit].target ?: false
+params.target_bed = params.genomes [ params.genome ].kits [params.kit].target_bed ?: false
+params.dbsnp = params.genomes [ params.genome ].dbsnp ?: false
+params.thousandg = params.genomes [ params.genome ].thousandg ?: false
+params.mills = params.genomes [ params.genome ].mills ?: false
+params.omni = params.genomes [ params.genome ].omni ?: false
+params.gfasta = params.genomes [ params.genome ].gfasta ?: false
+params.bwa_index = params.genomes [ params.genome ].bwa_index ?: false
+
 // Show help when needed
 if (params.help){
     log.info helpMessage
@@ -94,7 +105,7 @@ if (params.help){
 }
 
 // Check blocks for certain required parameters, to see they are given and exist
-if (!params.reads || !params.genome){
+if ((!params.reads || !params.genome) && !workflow.profile == 'test'){
     exit 1, "Parameters '--reads' and '--genome' are required to run the pipeline"
 }
 if (!params.kitfiles){
@@ -109,12 +120,33 @@ if(workflow.profile == 'awsbatch'){
     if (!workflow.workDir.startsWith('s3') || !params.outdir.startsWith('s3')) exit 1, "Specify S3 URLs for workDir and outdir parameters on AWSBatch!"
 }
 
-// Create a channel for input files
+//Channelize gfasta into multiple channels for later
+Channel.fromPath(params.gfasta)
+       .into{ch_gfasta_for_bwa_mapping; ch_gfasta_for_recal; ch_gfasta_for_bqsr; ch_gfasta_for_variantcall; ch_gfasta_for_multimetrics; ch_gfasta_for_metrics} 
 
-Channel
-    .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
-    .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
-    .into { read_files_fastqc; read_files_trimming }
+/*
+ * Create a channel for input read files
+ */
+if(params.readPaths){
+    if(params.singleEnd){
+        Channel
+            .from(params.readPaths)
+            .map { row -> [ row[0], [file(row[1][0])]] }
+            .ifEmpty { exit 1, "params.readPaths was empty - no input files supplied" }
+            .into { read_files_fastqc; read_files_trimming }
+    } else {
+        Channel
+            .from(params.readPaths)
+            .map { row -> [ row[0], [file(row[1][0]), file(row[1][1])]] }
+            .ifEmpty { exit 1, "params.readPaths was empty - no input files supplied" }
+            .into { read_files_fastqc; read_files_trimming }
+    }
+} else {
+    Channel
+        .fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )
+        .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
+        .into { read_files_fastqc; read_files_trimming }
+}
 
 
 // Validate Input indices for BWA Mem and GATK
@@ -124,13 +156,21 @@ if(params.aligner == 'bwa' ){
         .ifEmpty { exit 1, "BWA index not found: ${params.gfasta}.bwt" }
 }
 
-
 // Create a summary for the logfile
 def summary = [:]
 summary['Run Name']     = custom_runName ?: workflow.runName
-summary['Reads']        = params.reads
+summary['Reads']        = params.reads ?: params.readPaths
 summary['Data Type']    = params.singleEnd ? 'Single-End' : 'Paired-End'
 summary['Genome Assembly']       = params.genome
+summary['FastA']   = params.genomes [params.genome].gfasta ?: false
+summary['DBSNP']   = params.genomes [params.genome].dbsnp ?: false
+summary['Mills']   = params.genomes [params.genome].mills ?: false
+summary['Omni']    = params.genomes [params.genome].omni ?: false
+summary['1000G']   = params.genomes [params.genome].thousandg ?: false
+summary['Exome Kit'] = params.kit
+summary['- Bait'] = params.bait 
+summary['- Target'] = params.target
+summary['- Target Bed'] = params.target_bed
 summary['Trim R1'] = params.clip_r1
 summary['Trim R2'] = params.clip_r2
 summary["Trim 3' R1"] = params.three_prime_clip_r1
@@ -169,13 +209,25 @@ try {
               "============================================================"
 }
 
-// Build BWA Index if this is required
 
+Channel.fromPath("${params.dbsnp}")
+       .into{ch_dbsnp_for_baserecal; ch_dbsnp_for_multimetrics;ch_dbsnp_for_haplotypecaller; ch_dbsnp_for_vcf_index}
+
+Channel.fromPath("${params.target}")
+       .into{ch_kit_target_for_recal; ch_kit_target_for_bqsr; ch_kit_target_for_vcall; ch_kit_target_for_metrics}
+
+Channel.fromPath("${params.bait}")
+       .into{ch_kit_targetbait_for_multimetrics; ch_kit_targetbait_for_metrics}
+
+
+// Build BWA Index if this is required
 if(params.aligner == 'bwa' && !params.bwa_index){
     // Create Channels
     fasta_for_bwa_index = Channel
         .fromPath("${params.gfasta}")
     fasta_for_samtools_index = Channel
+        .fromPath("${params.gfasta}")
+    fasta_for_dict_index = Channel
         .fromPath("${params.gfasta}")
     // Create a BWA index for non-indexed genomes
     process makeBWAIndex {
@@ -187,7 +239,7 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         file fasta from fasta_for_bwa_index
 
         output:
-        file "*.{amb,ann,bwt,pac,sa}" into bwa_index
+        file "*.{amb,ann,bwt,pac,sa,fasta}" into bwa_index
 
         script:
         """
@@ -204,13 +256,46 @@ if(params.aligner == 'bwa' && !params.bwa_index){
         file fasta from fasta_for_samtools_index
 
         output:
-        file "*.fai" into samtools_index
+        file "*.fai" into samtools_index, ch_gfasta_index_for_realign, ch_gfasta_index_for_bqsr, ch_gfasta_index_for_vcall, ch_gfasta_index_for_metrics
 
         script:
         """
         samtools faidx $fasta
         """
     }
+    process makeSeqDict {
+        tag "$params.gfasta"
+        publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
+                   saveAs: { params.saveReference ? it : null }, mode: 'copy'
+        
+        input:
+        file fasta from fasta_for_dict_index
+
+        output:
+        file "*.dict" into ch_dict_index_for_recal, ch_dict_index_for_bqsr, ch_dict_index_for_vcall
+
+        script:
+        """
+        gatk CreateSequenceDictionary --REFERENCE $fasta --OUTPUT "${fasta.baseName}.dict"
+        """
+    }
+
+    process buildVCFIndex {
+        publishDir path: { params.saveReference ? "${params.outdir}/reference_genome" : params.outdir },
+                   saveAs: { params.saveReference ? it : null }, mode: 'copy'
+
+        input:
+        file(f_reference) from ch_dbsnp_for_vcf_index
+
+        output:
+        file("${f_reference}.idx") into ch_dbsnp_vcf_index
+
+        script:
+        """
+        igvtools index ${f_reference}
+        """
+}
+
 } else {
     bwa_index = file("${params.bwa_index}")
 }
@@ -292,6 +377,7 @@ process bwamem {
     input:
     set val(name), file(reads) from trimmed_reads
     file(bwa_index) from bwa_index
+    file(gfasta) from ch_gfasta_for_bwa_mapping
 
     output:
     set val(name), file("${name}_bwa.bam") into samples_sorted_bam
@@ -306,9 +392,9 @@ process bwamem {
     bwa mem \\
     -R $rg \\
     -t ${task.cpus} \\
-    $params.gfasta \\
+    $gfasta \\
     $reads \\
-    | samtools ${avail_mem} sort -O bam - > $outfile ${name}_bwa.bam
+    | samtools sort ${avail_mem} -O bam - > ${name}_bwa.bam
     """
 }
 
@@ -333,7 +419,7 @@ process markDuplicates {
     script:
     """
         mkdir `pwd`/tmp
-        gatk-launch MarkDuplicates \\
+        gatk MarkDuplicates \\
         --INPUT $sorted_bam \\
         --OUTPUT ${name}_markdup.bam \\
         --METRICS_FILE ${name}.dup_metrics \\
@@ -357,6 +443,11 @@ process recal_bam_files {
 
 
     input:
+    file gfasta from ch_gfasta_for_recal
+    file gfasta_index from ch_gfasta_index_for_realign
+    file gfasta_dict from ch_dict_index_for_recal
+    file dbsnp from ch_dbsnp_for_baserecal
+    file target from ch_kit_target_for_recal
     set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_markdup_bam
 
     output:
@@ -365,28 +456,16 @@ process recal_bam_files {
     file '.command.log' into gatk_base_recalibration_results
 
     script:
-    if(params.exome){
     """
-    gatk-launch BaseRecalibrator \\
-        -R $params.gfasta \\
+    gatk BaseRecalibrator \\
+        -R $gfasta \\
         -I $markdup_bam \\
         -O ${name}_table.recal \\
-        -L $params.target \\
-        --known-sites $params.dbsnp \\
+        -L $target \\
+        --known-sites $dbsnp \\
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
     """
-    } else {
-    """
-    gatk-launch BaseRecalibrator \\
-        -R $params.gfasta \\
-        -I $markdup_bam \\
-        -O ${name}_table.recal \\
-        --known-sites $params.dbsnp \\
-        --verbosity INFO \\
-        --java-options -Xmx${task.memory.toGiga()}g
-    """
-    }
 }
 
 process applyBQSR {
@@ -394,69 +473,98 @@ process applyBQSR {
     publishDir "${params.outdir}/GATK_ApplyBQSR", mode: 'copy'
 
     input:
+    file gfasta from ch_gfasta_for_bqsr
+    file gfasta_index from ch_gfasta_index_for_bqsr
+    file gfasta_dict from ch_dict_index_for_bqsr
+    file target from ch_kit_target_for_bqsr
     set val(name), file("${name}_table.recal") from samples_recal_reports
     set val(name), file(markdup_bam), file(markdup_bam_ind) from samples_for_applyBQSR
 
     output:
-    set val(name), file("${name}.bam"), file("${name}.bai") into bam_vcall, bam_metrics
+    set val(name), file("${name}.bam"), file("${name}.bai") into bam_vcall, bam_for_multiple_metrics, bam_for_hs_metrics
 
     script:
-    if(params.exome){
     """
-    gatk-launch ApplyBQSR \\
-        -R $params.gfasta \\
+    gatk ApplyBQSR \\
+        -R $gfasta \\
         -I $markdup_bam \\
         --bqsr-recal-file ${name}_table.recal \\
         -O ${name}.bam \\
-        -L $params.target \\
+        -L $target \\
         --create-output-bam-index true \\
         --java-options -Xmx${task.memory.toGiga()}g
     """
-    } else {
-    """
-    gatk-launch ApplyBQSR \\
-        -R $params.gfasta \\
-        -I $markdup_bam \\
-        --bqsr-recal-file ${name}_table.recal \\
-        -O ${name}.bam \\
-        --create-output-bam-index true \\
-        --java-options -Xmx${task.memory.toGiga()}g
-    """
-    }
-
 }
 
 /*
- * Step 7 - Determine quality metrics of mapped BAM files using QualiMap 2
+ * Generate relevant statistics
  *
 */
-process qualiMap {
-    tag "${name}"
-    publishDir "${params.outdir}/Qualimap", mode: 'copy'
+//TODO MAYBE STILL USE QUALIMAP BUT UPDATE IT TO USE BED 3 too? 
+
+process picard_multiple_metrics {
+	publishDir "${params.outdir}/Picard/MultipleMetrics", mode: 'copy'
+ 
+	input:
+    set val(name), file(realign_bam), file(realign_bam_ind) from bam_for_multiple_metrics
+    file vcfidx from ch_dbsnp_vcf_index
+    file gfasta from ch_gfasta_for_multimetrics
+    file dbsnp from ch_dbsnp_for_multimetrics
+    file bait from ch_kit_targetbait_for_multimetrics
+
+	output:
+	file("${prefix}*") into ch_collect_multiple_metrics_output
+
+	script:       
+
+	"""
+		gatk CollectMultipleMetrics \
+		--PROGRAM MeanQualityByCycle \
+		--PROGRAM QualityScoreDistribution \
+		--PROGRAM CollectAlignmentSummaryMetrics \
+		--PROGRAM CollectInsertSizeMetrics\
+       	--PROGRAM CollectSequencingArtifactMetrics \
+        --PROGRAM CollectQualityYieldMetrics \
+	    --PROGRAM CollectGcBiasMetrics \
+		--PROGRAM CollectBaseDistributionByCycle \
+		--INPUT $realign_bam \
+		--DB_SNP $dbsnp \
+        --REFERENCE_SEQUENCE $gfasta \
+		--INTERVALS $bait \
+		--ASSUME_SORTED true \
+		--QUIET true \
+		--OUTPUT ${name} \
+		--TMP_DIR tmp \
+        --java-options -Xmx${task.memory.toGiga()}g
+	"""
+}	
+
+process picard_hc_metrics {
+    publishDir "${params.outdir}/Picard/HcMetrics", mode: 'copy'
 
     input:
-    set val(name), file(realign_bam), file(realign_bam_ind) from bam_metrics
+    file gfasta from ch_gfasta_for_metrics
+    file gfasta_index from ch_gfasta_index_for_metrics
+    file target from ch_kit_target_for_metrics
+    file bait from ch_kit_targetbait_for_metrics
+    set val(name), file(realign_bam), file(realign_bam_ind) from bam_for_hs_metrics
 
     output:
-    file "${name}" into qualimap_results
-    file '.command.log' into qualimap_stdout
+    file(outfile) into ch_hybrid_capture_metrics
 
     script:
-    gcref = ''
-    gff = ''
-    if(params.genome == 'GRCh37') gcref = '-gd HUMAN'
-    if(params.genome == 'GRCm38') gcref = '-gd MOUSE'
-    if(params.exome) gff ="-gff ${params.target_bed}"
+    outfile = "${name}" + "_"+ ".hybrid_selection_metrics.txt"
+
     """
-    qualimap bamqc $gcref \\
-    -bam $realign_bam \\
-    -outdir ${name} \\
-    --skip-duplicated \\
-    --collect-overlap-pairs \\
-    -nt ${task.cpus} \\
-    $gff \\
-    --java-mem-size=${task.memory.toGiga()}G \\
-    """
+        gatk CollectHsMetrics \
+               --INPUT $realign_bam \
+               --OUTPUT $outfile \
+               --TARGET_INTERVALS $target \
+               --BAIT_INTERVALS $bait \
+               --REFERENCE_SEQUENCE $gfasta \
+               --TMP_DIR tmp \
+               --java-options -Xmx${task.memory.toGiga()}g
+        """
 }
 
 /*
@@ -469,20 +577,24 @@ process variantCall {
         saveAs: {filename -> filename.replaceFirst(/variants/, "raw_variants")}
 
     input:
+    file gfasta from ch_gfasta_for_variantcall
+    file gfasta_index from ch_gfasta_index_for_vcall
+    file gfasta_dict from ch_dict_index_for_vcall
+    file dbsnp from ch_dbsnp_for_haplotypecaller
+    file target from ch_kit_target_for_vcall
     set val(name), file(realign_bam), file(realign_bam_ind) from bam_vcall
 
     output:
     set val(name), file("${name}_variants.vcf"), file("${name}_variants.vcf.idx") into raw_variants
 
     script:
-    if(params.exome){
     """
-    gatk-launch HaplotypeCaller \\
+    gatk HaplotypeCaller \\
         -I $realign_bam \\
-        -R $params.gfasta \\
+        -R $gfasta \\
         -O ${name}_variants.vcf \\
         -ERC GVCF \\
-        -L $params.target \\
+        -L $target \\
         --create-output-variant-index \\
         --annotation MappingQualityRankSumTest \\
         --annotation QualByDepth \\
@@ -490,29 +602,10 @@ process variantCall {
         --annotation RMSMappingQuality \\
         --annotation FisherStrand \\
         --annotation Coverage \\
-        --dbsnp $params.dbsnp \\
+        --dbsnp $dbsnp \\
         --verbosity INFO \\
         --java-options -Xmx${task.memory.toGiga()}g
     """
-    } else { //We have a winner (genome)
-    """
-    gatk-launch HaplotypeCaller \\
-        -I $realign_bam \\
-        -R $params.gfasta \\
-        -O ${name}_variants.vcf \\
-        -ERC GVCF \\
-        --create-output-variant-index \\
-        --annotation MappingQualityRankSumTest \\
-        --annotation QualByDepth \\
-        --annotation ReadPosRankSumTest \\
-        --annotation RMSMappingQuality \\
-        --annotation FisherStrand \\
-        --annotation Coverage \\
-        --dbsnp $params.dbsnp \\
-        --verbosity INFO \\
-        --java-options -Xmx${task.memory.toGiga()}g
-    """
-    }
 }
 
 
@@ -535,8 +628,7 @@ process get_software_versions {
     trim_galore --version &> v_trim_galore.txt
     samtools --version &> v_samtools.txt
     bwa &> v_bwa.txt 2>&1 || true
-    qualimap --version &> v_qualimap.txt
-    gatk-launch BaseRecalibrator --version &> v_gatk.txt
+    gatk BaseRecalibrator --version &> v_gatk.txt
     multiqc --version &> v_multiqc.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
@@ -575,7 +667,6 @@ process GenerateMultiQCconfig {
   echo "- 'cutadapt'" >> multiqc_config.yaml
   echo "- 'bwa'" >> multiqc_config.yaml
   echo "- 'samtools'" >> multiqc_config.yaml
-  echo "- 'qualimap'" >> multiqc_config.yaml
   echo "- 'gatk'" >> multiqc_config.yaml
   """
 }
@@ -595,8 +686,9 @@ process multiqc {
     file ('trimgalore/*') from trimgalore_results.toList()
     file ('gatk_base_recalibration/T*') from gatk_base_recalibration_results.toList()
     file ('gatk_picard_duplicates/*') from markdup_results.toList()
-    file ('qualimap/*') from qualimap_results.toList()
     file ('software_versions/*') from software_versions_yaml.toList()
+    file ('*') from ch_collect_multiple_metrics_output.toList()
+    file ('*') from ch_hybrid_capture_metrics.toList()
 
 
     output:

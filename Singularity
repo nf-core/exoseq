@@ -2,7 +2,7 @@ From:nfcore/base
 Bootstrap:docker
 
 %labels
-    MAINTAINER Lukas Lueftinger  <lukas.lueftinger@imp.ac.at>
+    MAINTAINER Alexander Peltzer <alexander.peltzer@qbic.uni-tuebingen.de>
     DESCRIPTION Container image containing all requirements for the nf-core/exoseq pipeline
     VERSION 1.0dev
 
